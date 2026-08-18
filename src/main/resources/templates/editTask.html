@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>タスク編集</title>
+</head>
+
+<body>
+
+    <div class="container py-5">
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-6">
+
+                <div class="card">
+
+                    <div class="card-body">
+
+                        <h2 class="card-title mb-4">
+                            タスク編集
+                        </h2>
+
+                        <form
+                            th:action="@{/edit/{index}(index=${index})}"
+                            method="post">
+
+                            <!-- タスク名 -->
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    タスク名
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    class="form-control"
+                                    th:value="${task.title}"
+                                    required>
+
+                            </div>
+
+                            <!-- 区分 + 日付 -->
+                            <div class="row g-3 mb-3">
+
+                                <div class="col-4">
+
+                                    <label class="form-label">
+                                        予定・締切区分
+                                    </label>
+
+                                    <select
+                                        name="dateType"
+                                        class="form-select"
+                                        required>
+
+                                        <option
+                                            value="SCHEDULE"
+                                            th:selected="${task.dateType == 'SCHEDULE'}">
+                                            予定
+                                        </option>
+
+                                        <option
+                                            value="DEADLINE"
+                                            th:selected="${task.dateType == 'DEADLINE'}">
+                                            締切
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="col-8">
+
+                                    <label class="form-label">
+                                        日付
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        name="deadline"
+                                        class="form-control"
+                                        th:value="${task.deadline}"
+                                        onclick="this.showPicker()"
+                                        required>
+
+                                </div>
+
+                            </div>
+
+                            <!-- 時間 -->
+                            <div class="mb-4">
+
+                                <label class="form-label">
+                                    時間
+                                </label>
+
+                                <input
+                                    type="time"
+                                    name="time"
+                                    class="form-control"
+                                    th:value="${task.time}"
+                                    onclick="this.showPicker()"
+                                    required>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-info text-white me-2">
+                                更新
+                            </button>
+
+                            <a
+                                th:href="@{/}"
+                                class="btn btn-secondary">
+                                一覧へ戻る
+                            </a>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

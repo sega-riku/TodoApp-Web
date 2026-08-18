@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>Todoアプリメイン画面</title>
+</head>
+
+<body>
+
+    <div class="container py-4">
+
+        <h1
+            class="mb-4"
+            th:text="${title}">
+            Todo一覧
+        </h1>
+
+        <div class="row">
+
+            <!-- ========================= -->
+            <!-- 左側：タスク一覧 -->
+            <!-- ========================= -->
+            <div class="col-12 col-lg-8 mb-4 mb-lg-0">
+
+                <form
+                    action="/"
+                    method="get"
+                    class="mb-4">
+
+                    <!-- 1段目：検索 -->
+                    <div class="row g-2 align-items-end mb-3">
+
+                        <div class="col-9">
+
+                            <label class="form-label">
+                                タスク検索
+                            </label>
+
+                            <input
+                                type="text"
+                                name="keyword"
+                                class="form-control"
+                                placeholder="検索ワードを入力"
+                                th:value="${keyword}">
+
+                        </div>
+
+                        <div class="col-3">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100">
+                                検索
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- 2段目：並び順・表示・タスク追加 -->
+                    <div class="row g-2 align-items-end">
+
+                        <!-- 並び順 -->
+                        <div class="col-4">
+
+                            <label class="form-label">
+                                並び順
+                            </label>
+
+                            <select
+                                name="sort"
+                                class="form-select"
+                                onchange="this.form.submit()">
+
+                                <option
+                                    value="register"
+                                    th:selected="${sort == null || sort == 'register'}">
+                                    登録順
+                                </option>
+
+                                <option
+                                    value="deadline"
+                                    th:selected="${sort == 'deadline'}">
+                                    締切順
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- 表示 -->
+                        <div class="col-5">
+
+                            <label class="form-label">
+                                表示
+                            </label>
+
+                            <select
+                                name="status"
+                                class="form-select"
+                                onchange="this.form.submit()">
+
+                                <option
+                                    value="all"
+                                    th:selected="${status == null || status == 'all'}">
+                                    すべて
+                                </option>
+
+                                <option
+                                    value="incomplete"
+                                    th:selected="${status == 'incomplete'}">
+                                    未完了のみ
+                                </option>
+
+                                <option
+                                    value="completed"
+                                    th:selected="${status == 'completed'}">
+                                    完了のみ
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- タスク追加 -->
+                        <div class="col-3">
+
+                            <a
+                                class="btn btn-success w-100"
+                                th:href="@{/add}">
+                                ＋ タスク追加
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+                <!-- 件数表示 -->
+                <p>
+                    表示中：
+                    <span th:text="${displayedCount}"></span>件
+                    /
+                    全<span th:text="${totalCount}"></span>件
+                </p>
+
+                <!-- 0件 -->
+                <p th:if="${tasks.isEmpty()}">
+                    該当するタスクはありません。
+                </p>
+
+                <!-- ========================= -->
+                <!-- タスクカード -->
+                <!-- ========================= -->
+                <div
+                    th:each="task : ${tasks}"
+                    class="card mb-3">
+
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <!-- タスク情報 -->
+                            <div>
+
+                                <h5
+                                    class="card-title mb-2"
+                                    th:classappend="${task.completed}
+                                        ? ' text-decoration-line-through text-secondary'
+                                        : ''"
+                                    th:text="${task.title}">
+                                    タスク名
+                                </h5>
+
+                                <!-- 予定・締切日時 -->
+                                <p class="card-text mb-2">
+
+                                    <span
+                                        th:text="${task.dateType
+                                            == T(com.sega.todoappweb.DateType).SCHEDULE
+                                            ? '📅 予定：'
+                                            : '⏰ 締切：'}">
+                                    </span>
+
+                                    <span th:text="${task.deadline}">
+                                    </span>
+
+                                    <span th:text="${task.time}">
+                                    </span>
+
+                                </p>
+
+                                <!-- ステータス -->
+                                <span
+                                    class="badge"
+                                    th:classappend="${task.expired
+                                        ? ' text-bg-danger'
+                                        : task.completed
+                                            ? ' text-bg-success'
+                                            : ' text-bg-secondary'}"
+                                    th:text="${task.expired
+                                        ? '期限切れ'
+                                        : task.completed
+                                            ? '完了'
+                                            : '未完了'}">
+                                </span>
+
+                            </div>
+
+                            <!-- ========================= -->
+                            <!-- 操作ボタン -->
+                            <!-- ========================= -->
+                            <div class="d-flex align-self-end">
+
+                                <!-- 完了 -->
+                                <a
+                                    class="btn btn-success btn-sm me-2"
+                                    th:if="${!task.completed}"
+                                    th:href="@{/complete/{index}
+                                        (index=${allTasks.indexOf(task)})}">
+                                    完了
+                                </a>
+
+                                <!-- 未完了に戻す -->
+                                <a
+                                    class="btn btn-secondary btn-sm me-2"
+                                    th:if="${task.completed}"
+                                    th:href="@{/incomplete/{index}
+                                        (index=${allTasks.indexOf(task)})}">
+                                    未完了に戻す
+                                </a>
+
+                                <!-- 編集 -->
+                                <a
+                                    class="btn btn-info text-white btn-sm me-2"
+                                    th:href="@{/edit/{index}
+                                        (index=${allTasks.indexOf(task)})}">
+                                    編集
+                                </a>
+
+                                <!-- 削除 -->
+                                <button
+                                    type="button"
+                                    class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#deleteModal' + ${allTasks.indexOf(task)}">
+                                    削除
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="modal fade"
+                        th:id="'deleteModal' + ${allTasks.indexOf(task)}"
+                        tabindex="-1"
+                        aria-hidden="true">
+
+                        <div class="modal-dialog modal-dialog-centered">
+
+                            <div class="modal-content">
+
+                                <!-- ヘッダー -->
+                                <div class="modal-header">
+
+                                    <h5 class="modal-title">
+                                        タスク削除
+                                    </h5>
+
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="閉じる">
+                                    </button>
+
+                                </div>
+
+                                <!-- 本文 -->
+                                <div class="modal-body">
+
+                                    <p>
+                                        以下のタスクを削除しますか？
+                                    </p>
+
+                                    <p
+                                        class="fw-bold"
+                                        th:text="${task.title}">
+                                        タスク名
+                                    </p>
+
+                                    <p class="text-danger mb-0">
+                                        削除するとこのタスクは一覧から完全に削除されます。
+                                    </p>
+
+                                </div>
+
+                                <!-- フッター -->
+                                <div class="modal-footer">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal">
+                                        キャンセル
+                                    </button>
+
+                                    <a
+                                        class="btn btn-danger"
+                                        th:href="@{/delete/{index}
+                                            (index=${allTasks.indexOf(task)})}">
+                                        削除
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12 col-lg-4">
+
+                <h3 class="mb-4">
+                    予定・締切
+                </h3>
+
+                <div class="mb-5">
+
+                    <h4 class="mb-3">
+                        📅 予定
+                    </h4>
+
+                    <!-- 予定がない場合 -->
+                    <p
+                        class="text-secondary"
+                        th:if="${upcomingSchedules.isEmpty()}">
+                        今後の予定はありません。
+                    </p>
+
+                    <!-- 予定一覧 -->
+                    <div th:each="task, stat : ${upcomingSchedules}">
+
+                        <!-- 日付が変わる場所に区切り線 -->
+                        <hr
+                            th:if="${!stat.first
+                                && task.deadline
+                                != upcomingSchedules[stat.index - 1].deadline}">
+
+                        <!-- 同じ日付は1回だけ表示 -->
+                        <h5
+                            class="mb-2"
+                            th:if="${stat.first
+                                || task.deadline
+                                != upcomingSchedules[stat.index - 1].deadline}"
+                            th:text="${#temporals.format(
+                                task.deadline,
+                                'M月d日'
+                            )}">
+                            8月20日
+                        </h5>
+
+                        <!-- 時刻・予定名 -->
+                        <p class="mb-2 rounded p-2">
+
+                            <span>
+                                📅
+                            </span>
+
+                            <span th:text="${task.time}">
+                                10:00
+                            </span>
+
+                            <span
+                                class="ms-2 fw-semibold"
+                                th:text="${task.title}">
+                                タスク名
+                            </span>
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div>
+
+                    <h4 class="mb-3">
+                        ⏰ 締切
+                    </h4>
+
+                    <!-- 締切がない場合 -->
+                    <p
+                        class="text-secondary"
+                        th:if="${upcomingDeadlines.isEmpty()}">
+                        締切はありません。
+                    </p>
+
+                    <!-- 締切一覧 -->
+                    <div th:each="task, stat : ${upcomingDeadlines}">
+
+                        <!-- 日付が変わる場所に区切り線 -->
+                        <hr
+                            th:if="${!stat.first
+                                && task.deadline
+                                != upcomingDeadlines[stat.index - 1].deadline}">
+
+                        <!-- 同じ日付は1回だけ表示 -->
+                        <h5
+                            class="mb-2"
+                            th:if="${stat.first
+                                || task.deadline
+                                != upcomingDeadlines[stat.index - 1].deadline}"
+                            th:text="${#temporals.format(
+                                task.deadline,
+                                'M月d日'
+                            )}">
+                            8月20日
+                        </h5>
+
+                        <!-- 締切情報 -->
+                        <p
+                            class="mb-2 rounded p-2"
+                            th:classappend="${
+                                task.expired
+                                    ? ' bg-danger text-white'
+                                    : task.deadline.isEqual(today)
+                                        ? ' bg-danger-subtle text-danger-emphasis'
+                                        : !task.deadline.isAfter(threeDaysLater)
+                                            ? ' bg-warning-subtle text-warning-emphasis'
+                                            : ''
+                            }">
+
+                            <!-- 緊急度アイコン -->
+                            <span
+                                th:text="${task.expired
+                                    ? '🚨'
+                                    : !task.deadline.isAfter(threeDaysLater)
+                                        ? '⚠️'
+                                        : '⏰'}">
+                            </span>
+
+                            <!-- 時刻 -->
+                            <span th:text="${task.time}">
+                                23:59
+                            </span>
+
+                            <!-- タスク名 -->
+                            <span
+                                class="ms-2 fw-semibold"
+                                th:text="${task.title}">
+                                タスク名
+                            </span>
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+
+</html>
