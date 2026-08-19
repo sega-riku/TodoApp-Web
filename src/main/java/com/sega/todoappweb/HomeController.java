@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.security.Principal;
+
 @Controller
 public class HomeController {
 
@@ -28,7 +30,8 @@ public class HomeController {
     public String index(
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) String status,
-        Model model
+        Model model,
+        Principal principal
     ) {
 
         List<Task> tasks = taskRepository.findAll();
@@ -510,6 +513,11 @@ public class HomeController {
         model.addAttribute(
             "threeDaysLater",
             LocalDate.now().plusDays(3)
+        );
+
+        model.addAttribute(
+            "username",
+            principal.getName()
         );
 
         return "index";

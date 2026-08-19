@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>ログイン</title>
+</head>
+
+<body>
+
+    <div class="container py-5">
+
+        <!-- 横幅を制限して中央配置 -->
+        <div
+            class="mx-auto"
+            style="max-width: 600px;">
+
+            <!-- タイトル -->
+            <h1 class="text-center mb-4">
+                ログイン
+            </h1>
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <div th:if="${param.error}"
+                         class="alert alert-danger text-center">
+                         ユーザー名またはパスワードが正しくありません
+                    </div>
+
+                    <div th:if="${param.logout}"
+                         class="alert alert-success text-center">
+                         ログアウトしました
+                    </div>
+                    
+                    <form
+                        th:action="@{/login}"
+                        method="post">
+
+                        <!-- ユーザー名 -->
+                        <div class="mb-3">
+
+                            <label
+                                for="username"
+                                class="form-label">
+                                ユーザー名
+                            </label>
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <!-- パスワード -->
+                        <div class="mb-4">
+
+                            <label
+                                for="password"
+                                class="form-label">
+                                パスワード
+                            </label>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <!-- ボタンエリア -->
+                        <div class="d-flex justify-content-center gap-3">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                style="width: 140px;">
+                                ログイン
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
