@@ -3,14 +3,24 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 
-//一件分のタスク情報を保持するクラス
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
+//一件分のタスク情報を保持するクラス
+@Entity
 public class Task {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     private String title; 
     private LocalDate deadline;
     private LocalTime time;
     private DateType dateType;
     private boolean completed;
+
+    public Task(){
+    }
 
     //引数ありのコンストラクタ
     public Task(String title, LocalDate deadline, LocalTime time, DateType dateType){  
@@ -30,6 +40,10 @@ public class Task {
     }
 
     //getter
+    public Long getId(){
+        return this.id;
+    }
+
     public String getTitle(){ //タイトル取得
         return this.title;
     }
@@ -47,9 +61,7 @@ public class Task {
     }
 
     public boolean isExpired(){
-
         LocalDateTime taskDateTime = LocalDateTime.of(this.deadline, time);
-
         return this.dateType == DateType.DEADLINE && taskDateTime.isBefore(LocalDateTime.now());
     }
 

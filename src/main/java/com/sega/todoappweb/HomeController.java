@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,60 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class HomeController {
 
-    private ArrayList<Task> tasks = new ArrayList<>();
+    private final TaskRepository taskRepository;
 
-    public HomeController() {
-
-        // テストデータ
-        tasks.add(new Task(
-            "Javaを勉強する",
-            LocalDate.of(2026, 8, 5),
-            LocalTime.of(10, 0),
-            DateType.DEADLINE,
-            true
-        ));
-
-        tasks.add(new Task(
-            "Javaを勉強する",
-            LocalDate.of(2026, 8, 5),
-            LocalTime.of(10, 0),
-            DateType.DEADLINE
-        ));
-
-        tasks.add(new Task(
-            "Spring Bootを勉強する",
-            LocalDate.of(2026, 8, 10),
-            LocalTime.of(23, 59),
-            DateType.DEADLINE
-        ));
-
-        tasks.add(new Task(
-            "GitHubへPushする",
-            LocalDate.of(2026, 8, 31),
-            LocalTime.of(23, 59),
-            DateType.DEADLINE
-        ));
-
-        tasks.add(new Task(
-            "岩手帰る",
-            LocalDate.of(2026, 8, 7),
-            LocalTime.of(20, 0),
-            DateType.SCHEDULE
-        ));
-
-        tasks.add(new Task(
-            "アプリ完成",
-            LocalDate.of(2026, 8, 28),
-            LocalTime.of(18, 0),
-            DateType.SCHEDULE
-        ));
-
-        tasks.add(new Task(
-            "アプリ提出",
-            LocalDate.of(2026, 8, 31),
-            LocalTime.of(18, 0),
-            DateType.DEADLINE
-        ));
+    public HomeController(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
     }
 
     // メイン画面処理
@@ -80,6 +31,7 @@ public class HomeController {
         @RequestParam(required = false) String status,
         Model model
     ) {
+        List<Task> tasks = taskRepository.findAll();
 
         // 通常一覧に表示してよいタスク
         ArrayList<Task> visibleTasks = new ArrayList<>();
@@ -241,77 +193,83 @@ public class HomeController {
         @RequestParam DateType dateType
     ) {
 
-        tasks.add(
-            new Task(
-                title,
-                deadline,
-                time,
-                dateType
-            )
+        Task task = new Task(
+            title,
+            deadline,
+            time,
+            dateType
         );
+
+        taskRepository.save(task);
 
         return "redirect:/";
     }
 
     // タスク完了処理
-    @GetMapping("/complete/{index}")
-    public String completeTask(@PathVariable int index) {
-        tasks.get(index).complete();
+    @GetMapping("/complete/{id}")
+    public String completeTask(@PathVariable Long id) {
+        Task task = taskRepository.findById(id).orElseThrow();
+        task.complete();
+        taskRepository.save(task);
 
         return "redirect:/";
     }
 
     //タスクを未完了に戻す処理
-    @GetMapping("/incomplete/{index}")
-    public String incompleteTask(@PathVariable int index) {
-        tasks.get(index).incomplete();
+    @GetMapping("/incomplete/{id}")
+    public String incompleteTask(@PathVariable Long id) {
+        Task task = taskRepository.findById(id).orElseThrow();
+        task.incomplete();
+        taskRepository.save(task);
 
         return "redirect:/";
     }
     
 
     // タスク編集画面
-    @GetMapping("/edit/{index}")
+    @GetMapping("/edit/{id}")
     public String editTask(
-        @PathVariable int index,
+        @PathVariable Long id,
         Model model
     ) {
 
-        Task task = tasks.get(index);
+        Task task = taskRepository.findById(id).orElseThrow();
 
         model.addAttribute("task", task);
-        model.addAttribute("index", index);
+        model.addAttribute("index", id);
 
         return "editTask";
     }
 
     // タスク更新処理
-    @PostMapping("/edit/{index}")
+    @PostMapping("/edit/{id}")
     public String updateTask(
-        @PathVariable int index,
+        @PathVariable Long id,
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam LocalTime time,
         @RequestParam DateType dateType
     ) {
 
-        Task task = tasks.get(index);
+        Task task = taskRepository.findById(id).orElseThrow();
 
         task.setTitle(title);
         task.setDeadline(deadline);
         task.setTime(time);
         task.setDateType(dateType);
 
+        taskRepository.save(task);
+
         return "redirect:/";
     }
 
     // タスク削除処理
-    @GetMapping("/delete/{index}")
+    @GetMapping("/delete/{id}")
     public String deleteTask(
-        @PathVariable int index
+        @PathVariable Long id
     ) {
 
-        tasks.remove(index);
+        taskRepository.deleteById(id);
 
         return "redirect:/";
     }

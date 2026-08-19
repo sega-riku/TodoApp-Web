@@ -224,8 +224,7 @@
                                 <a
                                     class="btn btn-success btn-sm me-2"
                                     th:if="${!task.completed}"
-                                    th:href="@{/complete/{index}
-                                        (index=${allTasks.indexOf(task)})}">
+                                    th:href="@{/complete/{id}(id=${task.id})}">
                                     完了
                                 </a>
 
@@ -233,16 +232,14 @@
                                 <a
                                     class="btn btn-secondary btn-sm me-2"
                                     th:if="${task.completed}"
-                                    th:href="@{/incomplete/{index}
-                                        (index=${allTasks.indexOf(task)})}">
+                                    th:href="@{/incomplete/{id}(id=${task.id})}">
                                     未完了に戻す
                                 </a>
 
                                 <!-- 編集 -->
                                 <a
                                     class="btn btn-info text-white btn-sm me-2"
-                                    th:href="@{/edit/{index}
-                                        (index=${allTasks.indexOf(task)})}">
+                                    th:href="@{/edit/{id}(id=${task.id})}">
                                     編集
                                 </a>
 
@@ -251,7 +248,7 @@
                                     type="button"
                                     class="btn btn-danger btn-sm"
                                     data-bs-toggle="modal"
-                                    th:data-bs-target="'#deleteModal' + ${allTasks.indexOf(task)}">
+                                    th:data-bs-target="'#deleteModal' + ${task.id}">
                                     削除
                                 </button>
 
@@ -261,9 +258,12 @@
 
                     </div>
 
+                    <!-- ========================= -->
+                    <!-- 削除確認モーダル -->
+                    <!-- ========================= -->
                     <div
                         class="modal fade"
-                        th:id="'deleteModal' + ${allTasks.indexOf(task)}"
+                        th:id="'deleteModal' + ${task.id}"
                         tabindex="-1"
                         aria-hidden="true">
 
@@ -318,8 +318,7 @@
 
                                     <a
                                         class="btn btn-danger"
-                                        th:href="@{/delete/{index}
-                                            (index=${allTasks.indexOf(task)})}">
+                                        th:href="@{/delete/{id}(id=${task.id})}">
                                         削除
                                     </a>
 
@@ -335,12 +334,18 @@
 
             </div>
 
+            <!-- ========================= -->
+            <!-- 右側：予定・締切 -->
+            <!-- ========================= -->
             <div class="col-12 col-lg-4">
 
                 <h3 class="mb-4">
                     予定・締切
                 </h3>
 
+                <!-- ========================= -->
+                <!-- 予定 -->
+                <!-- ========================= -->
                 <div class="mb-5">
 
                     <h4 class="mb-3">
@@ -399,6 +404,9 @@
 
                 </div>
 
+                <!-- ========================= -->
+                <!-- 締切 -->
+                <!-- ========================= -->
                 <div>
 
                     <h4 class="mb-3">
