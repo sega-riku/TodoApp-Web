@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>予定追加</title>
+</head>
+
+<body>
+
+    <div class="container py-5">
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-6">
+
+                <div class="card">
+
+                    <div class="card-body">
+
+                        <h2 class="card-title mb-4">
+                            時間・詳細を追加
+                        </h2>
+
+                        <!-- 元の予定情報 -->
+                        <div class="mb-4">
+
+                            <p class="mb-2">
+                                <strong>タスク名：</strong>
+                                <span th:text="${task.title}">
+                                    タスク名
+                                </span>
+                            </p>
+
+                            <p class="mb-0">
+                                <strong>日付：</strong>
+                                <span th:text="${task.deadline}">
+                                    2026-08-31
+                                </span>
+                            </p>
+
+                        </div>
+
+                        <form
+                            th:action="@{/schedule/add/{id}(id=${task.id})}"
+                            method="post">
+
+                            <!-- 時間 -->
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    時間
+                                </label>
+
+                                <input
+                                    type="time"
+                                    name="time"
+                                    class="form-control"
+                                    onclick="this.showPicker()"
+                                    required>
+
+                            </div>
+
+                            <!-- 詳細・備考 -->
+                            <div class="mb-4">
+
+                                <label class="form-label">
+                                    詳細・備考（任意）
+                                </label>
+
+                                <textarea
+                                    name="description"
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="詳細やメモを入力"></textarea>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success me-2">
+                                追加
+                            </button>
+
+                            <a
+                                th:href="@{/}"
+                                class="btn btn-secondary">
+                                一覧へ戻る
+                            </a>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

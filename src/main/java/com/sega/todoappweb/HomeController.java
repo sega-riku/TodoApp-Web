@@ -27,14 +27,17 @@ public class HomeController {
     @GetMapping("/")
     public String index(
         @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) String sort,
         @RequestParam(required = false) String status,
         Model model
     ) {
+
         List<Task> tasks = taskRepository.findAll();
 
         // 通常一覧に表示してよいタスク
         ArrayList<Task> visibleTasks = new ArrayList<>();
+
+        // 全件数表示用グループ
+        ArrayList<TaskGroup> visibleTaskGroups = new ArrayList<>();
 
         // 検索後のタスク
         ArrayList<Task> displayedTasks = new ArrayList<>();
@@ -42,12 +45,22 @@ public class HomeController {
         // ステータス絞り込み後のタスク
         ArrayList<Task> filteredTasks = new ArrayList<>();
 
+        // 左側のタスク一覧をグループ化
+        ArrayList<TaskGroup> taskGroups = new ArrayList<>();
+
         // 右側「今後の予定・締切」用
         ArrayList<Task> upcomingSchedules = new ArrayList<>();
         ArrayList<Task> upcomingDeadlines = new ArrayList<>();
 
+        ArrayList<TaskGroup> scheduleGroups = new ArrayList<>();
+        ArrayList<TaskDateGroup> scheduleDateGroups = new ArrayList<>();
+
+        ArrayList<TaskGroup> deadlineGroups = new ArrayList<>();
+        ArrayList<TaskDateGroup> deadlineDateGroups = new ArrayList<>();
+
         LocalDateTime now = LocalDateTime.now();
 
+        // 左側に表示してよいタスク
         for (Task task : tasks) {
 
             LocalDateTime taskDateTime =
@@ -66,14 +79,62 @@ public class HomeController {
             boolean pastSchedule =
                 task.getDateType() == DateType.SCHEDULE
                 && taskDateTime.isBefore(now);
-            
-            if(!completedExpired && !pastSchedule){
+
+            if (!completedExpired && !pastSchedule) {
                 visibleTasks.add(task);
             }
-
         }
-        
 
+        // 同じ日付・同じタイトル・同じ予定/締切
+        for (Task task : visibleTasks) {
+
+            TaskGroup foundGroup = null;
+
+            for (TaskGroup group : visibleTaskGroups) {
+
+                boolean sameDate =
+                    group.getDeadline()
+                         .equals(task.getDeadline());
+
+                boolean sameTitle =
+                    group.getTitle()
+                         .equals(task.getTitle());
+
+                boolean sameDateType =
+                    group.getTasks()
+                         .get(0)
+                         .getDateType()
+                    == task.getDateType();
+
+                if (
+                    sameDate
+                    && sameTitle
+                    && sameDateType
+                ) {
+                    foundGroup = group;
+                    break;
+                }
+            }
+
+            if (foundGroup != null) {
+
+                foundGroup.addTask(task);
+
+            } else {
+
+                TaskGroup newGroup =
+                    new TaskGroup(
+                        task.getDeadline(),
+                        task.getTitle()
+                    );
+
+                newGroup.addTask(task);
+
+                visibleTaskGroups.add(newGroup);
+            }
+        }
+
+        // 検索
         if (keyword == null || keyword.isBlank()) {
 
             displayedTasks.addAll(visibleTasks);
@@ -81,23 +142,24 @@ public class HomeController {
         } else {
 
             for (Task task : visibleTasks) {
+
                 if (task.getTitle().contains(keyword)) {
                     displayedTasks.add(task);
                 }
             }
         }
 
-        if ("deadline".equals(sort)) {
+        // 日付順、同じ日なら時間順
+        displayedTasks.sort(
+            Comparator.comparing(Task::getDeadline)
+                      .thenComparing(Task::getTime)
+        );
 
-            displayedTasks.sort(
-                Comparator.comparing(Task::getDeadline)
-                          .thenComparing(Task::getTime)
-            );
-        }
-
+        // ステータス絞り込み
         if ("completed".equals(status)) {
 
             for (Task task : displayedTasks) {
+
                 if (task.isCompleted()) {
                     filteredTasks.add(task);
                 }
@@ -106,6 +168,7 @@ public class HomeController {
         } else if ("incomplete".equals(status)) {
 
             for (Task task : displayedTasks) {
+
                 if (!task.isCompleted()) {
                     filteredTasks.add(task);
                 }
@@ -116,60 +179,334 @@ public class HomeController {
             filteredTasks.addAll(displayedTasks);
         }
 
-        for (Task task : tasks) {
-            LocalDateTime taskDateTime =
-                LocalDateTime.of(task.getDeadline(),task.getTime());
+        // 左側のタスクをグループ化
+        for (Task task : filteredTasks) {
 
-            if(task.isCompleted()){
+            TaskGroup foundGroup = null;
+
+            for (TaskGroup group : taskGroups) {
+
+                boolean sameDate =
+                    group.getDeadline()
+                         .equals(task.getDeadline());
+
+                boolean sameTitle =
+                    group.getTitle()
+                         .equals(task.getTitle());
+
+                boolean sameDateType =
+                    group.getTasks()
+                         .get(0)
+                         .getDateType()
+                    == task.getDateType();
+
+                if (
+                    sameDate
+                    && sameTitle
+                    && sameDateType
+                ) {
+                    foundGroup = group;
+                    break;
+                }
+            }
+
+            if (foundGroup != null) {
+
+                foundGroup.addTask(task);
+
+            } else {
+
+                TaskGroup newGroup =
+                    new TaskGroup(
+                        task.getDeadline(),
+                        task.getTitle()
+                    );
+
+                newGroup.addTask(task);
+
+                taskGroups.add(newGroup);
+            }
+        }
+
+        // 右側に表示する予定・締切
+        for (Task task : tasks) {
+
+            LocalDateTime taskDateTime =
+                LocalDateTime.of(
+                    task.getDeadline(),
+                    task.getTime()
+                );
+
+            // 完了済みは右側に表示しない
+            if (task.isCompleted()) {
                 continue;
             }
 
-            if(task.getDateType() == DateType.SCHEDULE){
+            // 今後の予定
+            if (task.getDateType() == DateType.SCHEDULE) {
+
                 if (!taskDateTime.isBefore(now)) {
                     upcomingSchedules.add(task);
                 }
             }
 
+            // 締切
             if (task.getDateType() == DateType.DEADLINE) {
                 upcomingDeadlines.add(task);
             }
         }
 
-        // 日付順、同じ日なら時間順
+        // 予定
         upcomingSchedules.sort(
             Comparator.comparing(Task::getDeadline)
                       .thenComparing(Task::getTime)
         );
-        //直近5件の予定
-        if (upcomingSchedules.size() > 5) {
-            upcomingSchedules = new ArrayList<>(upcomingSchedules.subList(0, 5));
+
+        // 同じ日付・同じタスク名でグループ化
+        for (Task task : upcomingSchedules) {
+
+            TaskGroup foundGroup = null;
+
+            for (TaskGroup group : scheduleGroups) {
+
+                boolean sameDate =
+                    group.getDeadline()
+                         .equals(task.getDeadline());
+
+                boolean sameTitle =
+                    group.getTitle()
+                         .equals(task.getTitle());
+
+                if (sameDate && sameTitle) {
+                    foundGroup = group;
+                    break;
+                }
+            }
+
+            if (foundGroup != null) {
+
+                foundGroup.addTask(task);
+
+            } else {
+
+                TaskGroup newGroup =
+                    new TaskGroup(
+                        task.getDeadline(),
+                        task.getTitle()
+                    );
+
+                newGroup.addTask(task);
+
+                scheduleGroups.add(newGroup);
+            }
         }
 
-        //締切順
+        // 予定をさらに同じ日付でグループ化
+        for (TaskGroup group : scheduleGroups) {
+
+            TaskDateGroup foundDateGroup = null;
+
+            for (TaskDateGroup dateGroup : scheduleDateGroups) {
+
+                if (
+                    dateGroup.getDeadline()
+                             .equals(group.getDeadline())
+                ) {
+                    foundDateGroup = dateGroup;
+                    break;
+                }
+            }
+
+            if (foundDateGroup != null) {
+
+                foundDateGroup.addGroup(group);
+
+            } else {
+
+                TaskDateGroup newDateGroup =
+                    new TaskDateGroup(
+                        group.getDeadline()
+                    );
+
+                newDateGroup.addGroup(group);
+
+                scheduleDateGroups.add(newDateGroup);
+            }
+        }
+
+        // 予定は直近5日分まで表示
+        if (scheduleDateGroups.size() > 5) {
+
+            scheduleDateGroups =
+                new ArrayList<>(
+                    scheduleDateGroups.subList(0, 5)
+                );
+        }
+
+        // 締切
         upcomingDeadlines.sort(
             Comparator.comparing(Task::getDeadline)
-                      .thenComparing(Task::getTime)  
+                      .thenComparing(Task::getTime)
         );
-        //直近5件の締切(締切超過も込み)
-        if(upcomingDeadlines.size() > 5) {
-            upcomingDeadlines = new ArrayList<>(upcomingDeadlines.subList(0, 5));
+
+        // 同じ日付・同じタスク名でグループ化
+        for (Task task : upcomingDeadlines) {
+
+            TaskGroup foundGroup = null;
+
+            for (TaskGroup group : deadlineGroups) {
+
+                boolean sameDate =
+                    group.getDeadline()
+                         .equals(task.getDeadline());
+
+                boolean sameTitle =
+                    group.getTitle()
+                         .equals(task.getTitle());
+
+                if (sameDate && sameTitle) {
+                    foundGroup = group;
+                    break;
+                }
+            }
+
+            if (foundGroup != null) {
+
+                foundGroup.addTask(task);
+
+            } else {
+
+                TaskGroup newGroup =
+                    new TaskGroup(
+                        task.getDeadline(),
+                        task.getTitle()
+                    );
+
+                newGroup.addTask(task);
+
+                deadlineGroups.add(newGroup);
+            }
         }
 
-        model.addAttribute("title", "Todo一覧");
-        model.addAttribute("tasks", filteredTasks);
-        model.addAttribute("allTasks", tasks);
+        // 締切をさらに同じ日付でグループ化
+        for (TaskGroup group : deadlineGroups) {
 
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("sort", sort);
-        model.addAttribute("status", status);
+            TaskDateGroup foundDateGroup = null;
 
-        model.addAttribute("totalCount", visibleTasks.size());
-        model.addAttribute("displayedCount", filteredTasks.size());
+            for (TaskDateGroup dateGroup : deadlineDateGroups) {
 
-        model.addAttribute("upcomingSchedules", upcomingSchedules);
-        model.addAttribute("upcomingDeadlines", upcomingDeadlines);
+                if (
+                    dateGroup.getDeadline()
+                             .equals(group.getDeadline())
+                ) {
+                    foundDateGroup = dateGroup;
+                    break;
+                }
+            }
 
-        model.addAttribute("today", LocalDate.now());
+            if (foundDateGroup != null) {
+
+                foundDateGroup.addGroup(group);
+
+            } else {
+
+                TaskDateGroup newDateGroup =
+                    new TaskDateGroup(
+                        group.getDeadline()
+                    );
+
+                newDateGroup.addGroup(group);
+
+                deadlineDateGroups.add(newDateGroup);
+            }
+        }
+
+        // 締切は直近5日分まで表示
+        if (deadlineDateGroups.size() > 5) {
+
+            deadlineDateGroups =
+                new ArrayList<>(
+                    deadlineDateGroups.subList(0, 5)
+                );
+        }
+
+        model.addAttribute(
+            "title",
+            "Todo一覧"
+        );
+
+        model.addAttribute(
+            "tasks",
+            filteredTasks
+        );
+
+        model.addAttribute(
+            "taskGroups",
+            taskGroups
+        );
+
+        model.addAttribute(
+            "allTasks",
+            tasks
+        );
+
+        model.addAttribute(
+            "keyword",
+            keyword
+        );
+
+        model.addAttribute(
+            "status",
+            status
+        );
+
+        // 全件数もグループ数
+        model.addAttribute(
+            "totalCount",
+            visibleTaskGroups.size()
+        );
+
+        // 表示中件数もグループ数
+        model.addAttribute(
+            "displayedCount",
+            taskGroups.size()
+        );
+
+        model.addAttribute(
+            "upcomingSchedules",
+            upcomingSchedules
+        );
+
+        model.addAttribute(
+            "upcomingDeadlines",
+            upcomingDeadlines
+        );
+
+        model.addAttribute(
+            "scheduleGroups",
+            scheduleGroups
+        );
+
+        model.addAttribute(
+            "scheduleDateGroups",
+            scheduleDateGroups
+        );
+
+        model.addAttribute(
+            "deadlineGroups",
+            deadlineGroups
+        );
+
+        model.addAttribute(
+            "deadlineDateGroups",
+            deadlineDateGroups
+        );
+
+        model.addAttribute(
+            "today",
+            LocalDate.now()
+        );
+
         model.addAttribute(
             "threeDaysLater",
             LocalDate.now().plusDays(3)
@@ -181,6 +518,7 @@ public class HomeController {
     // タスク追加画面
     @GetMapping("/add")
     public String addTask() {
+
         return "addTask";
     }
 
@@ -190,41 +528,192 @@ public class HomeController {
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam LocalTime time,
-        @RequestParam DateType dateType
+        @RequestParam DateType dateType,
+        @RequestParam(required = false) String description
     ) {
 
-        Task task = new Task(
-            title,
-            deadline,
-            time,
-            dateType
+        Task task =
+            new Task(
+                title,
+                deadline,
+                time,
+                dateType,
+                description
+            );
+
+        taskRepository.save(task);
+
+        return "redirect:/";
+    }
+
+    // 既存の予定に時間・詳細を追加する画面
+    @GetMapping("/schedule/add/{id}")
+    public String addScheduleTime(
+        @PathVariable Long id,
+        Model model
+    ) {
+
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
+        model.addAttribute(
+            "task",
+            task
         );
 
-        taskRepository.save(task);
+        return "addScheduleTime";
+    }
+
+    // 既存の予定に時間・詳細を追加する処理
+    @PostMapping("/schedule/add/{id}")
+    public String addScheduleTime(
+        @PathVariable Long id,
+        @RequestParam LocalTime time,
+        @RequestParam(required = false) String description
+    ) {
+
+        Task baseTask =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
+        Task newTask =
+            new Task(
+                baseTask.getTitle(),
+                baseTask.getDeadline(),
+                time,
+                DateType.SCHEDULE,
+                description
+            );
+
+        taskRepository.save(newTask);
 
         return "redirect:/";
     }
 
-    // タスク完了処理
+    // 個別タスク完了処理
     @GetMapping("/complete/{id}")
-    public String completeTask(@PathVariable Long id) {
-        Task task = taskRepository.findById(id).orElseThrow();
+    public String completeTask(
+        @PathVariable Long id
+    ) {
+
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
         task.complete();
+
         taskRepository.save(task);
 
         return "redirect:/";
     }
 
-    //タスクを未完了に戻す処理
+    // 個別タスクを未完了に戻す処理
     @GetMapping("/incomplete/{id}")
-    public String incompleteTask(@PathVariable Long id) {
-        Task task = taskRepository.findById(id).orElseThrow();
+    public String incompleteTask(
+        @PathVariable Long id
+    ) {
+
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
         task.incomplete();
+
         taskRepository.save(task);
 
         return "redirect:/";
     }
-    
+
+    // グループ一括完了処理
+    @GetMapping("/complete/group/{id}")
+    public String completeTaskGroup(
+        @PathVariable Long id
+    ) {
+
+        Task baseTask =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
+        List<Task> tasks =
+            taskRepository.findAll();
+
+        for (Task task : tasks) {
+
+            boolean sameDate =
+                task.getDeadline()
+                    .equals(baseTask.getDeadline());
+
+            boolean sameTitle =
+                task.getTitle()
+                    .equals(baseTask.getTitle());
+
+            boolean sameDateType =
+                task.getDateType()
+                == baseTask.getDateType();
+
+            if (
+                sameDate
+                && sameTitle
+                && sameDateType
+            ) {
+
+                task.complete();
+
+                taskRepository.save(task);
+            }
+        }
+
+        return "redirect:/";
+    }
+
+    // グループ一括未完了処理
+    @GetMapping("/incomplete/group/{id}")
+    public String incompleteTaskGroup(
+        @PathVariable Long id
+    ) {
+
+        Task baseTask =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
+        List<Task> tasks =
+            taskRepository.findAll();
+
+        for (Task task : tasks) {
+
+            boolean sameDate =
+                task.getDeadline()
+                    .equals(baseTask.getDeadline());
+
+            boolean sameTitle =
+                task.getTitle()
+                    .equals(baseTask.getTitle());
+
+            boolean sameDateType =
+                task.getDateType()
+                == baseTask.getDateType();
+
+            if (
+                sameDate
+                && sameTitle
+                && sameDateType
+            ) {
+
+                task.incomplete();
+
+                taskRepository.save(task);
+            }
+        }
+
+        return "redirect:/";
+    }
 
     // タスク編集画面
     @GetMapping("/edit/{id}")
@@ -233,10 +722,20 @@ public class HomeController {
         Model model
     ) {
 
-        Task task = taskRepository.findById(id).orElseThrow();
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
 
-        model.addAttribute("task", task);
-        model.addAttribute("index", id);
+        model.addAttribute(
+            "task",
+            task
+        );
+
+        model.addAttribute(
+            "index",
+            id
+        );
 
         return "editTask";
     }
@@ -248,15 +747,20 @@ public class HomeController {
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam LocalTime time,
-        @RequestParam DateType dateType
+        @RequestParam DateType dateType,
+        @RequestParam(required = false) String description
     ) {
 
-        Task task = taskRepository.findById(id).orElseThrow();
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
 
         task.setTitle(title);
         task.setDeadline(deadline);
         task.setTime(time);
         task.setDateType(dateType);
+        task.setDescription(description);
 
         taskRepository.save(task);
 
