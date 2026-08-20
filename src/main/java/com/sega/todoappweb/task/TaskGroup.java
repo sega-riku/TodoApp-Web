@@ -1,4 +1,4 @@
-package com.sega.todoappweb;
+package com.sega.todoappweb.task;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

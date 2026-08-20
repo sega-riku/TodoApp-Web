@@ -20,12 +20,14 @@ public class DataInitializer {
         return args -> {
 
             // 同じユーザーを毎回作らない
-            if (userRepository.findByUsername("test").isEmpty()) {
+            if (userRepository.findByUsername("user1").isEmpty()) {
 
                 User user = new User(
-                    "test",
-                    passwordEncoder.encode("password")
+                    "user1",
+                    passwordEncoder.encode("password"),
+                    "USER"
                 );
+            
 
                 userRepository.save(user);
             }

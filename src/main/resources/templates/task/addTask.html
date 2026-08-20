@@ -9,7 +9,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
-    <title>タスク編集</title>
+    <title>タスク追加</title>
 </head>
 
 <body>
@@ -25,12 +25,10 @@
                     <div class="card-body">
 
                         <h2 class="card-title mb-4">
-                            タスク編集
+                            タスク追加
                         </h2>
 
-                        <form
-                            th:action="@{/edit/{id}(id=${task.id})}"
-                            method="post">
+                        <form th:action="@{/add}" method="post">
 
                             <!-- タスク名 -->
                             <div class="mb-3">
@@ -43,7 +41,6 @@
                                     type="text"
                                     name="title"
                                     class="form-control"
-                                    th:value="${task.title}"
                                     required>
 
                             </div>
@@ -62,15 +59,11 @@
                                         class="form-select"
                                         required>
 
-                                        <option
-                                            value="SCHEDULE"
-                                            th:selected="${task.dateType == 'SCHEDULE'}">
+                                        <option value="SCHEDULE">
                                             予定
                                         </option>
 
-                                        <option
-                                            value="DEADLINE"
-                                            th:selected="${task.dateType == 'DEADLINE'}">
+                                        <option value="DEADLINE">
                                             締切
                                         </option>
 
@@ -88,7 +81,6 @@
                                         type="date"
                                         name="deadline"
                                         class="form-control"
-                                        th:value="${task.deadline}"
                                         onclick="this.showPicker()"
                                         required>
 
@@ -107,7 +99,6 @@
                                     type="time"
                                     name="time"
                                     class="form-control"
-                                    th:value="${task.time}"
                                     onclick="this.showPicker()"
                                     required>
 
@@ -121,13 +112,13 @@
                                     </span>
                                 </label>
 
-                                <textarea name="description" class="form-control" rows="3" placeholder="詳細やメモを入力" th:text="${task.description}"></textarea>
+                                <textarea name="description" class="form-control" rows="3" placeholder="詳細やメモを入力"></textarea>
                             </div>
 
                             <button
                                 type="submit"
-                                class="btn btn-info text-white me-2">
-                                更新
+                                class="btn btn-success me-2">
+                                登録
                             </button>
 
                             <a

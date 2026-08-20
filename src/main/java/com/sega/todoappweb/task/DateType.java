@@ -1,4 +1,4 @@
-package com.sega.todoappweb;
+package com.sega.todoappweb.task;
 
 public enum DateType {
     SCHEDULE,

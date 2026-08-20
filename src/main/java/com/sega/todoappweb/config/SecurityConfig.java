@@ -25,7 +25,8 @@ public class SecurityConfig {
                     DispatcherType.ERROR
                 ).permitAll()
 
-                // その他はログイン必須
+                .requestMatchers("/login", "/register").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
 

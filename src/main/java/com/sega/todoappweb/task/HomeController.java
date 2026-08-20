@@ -1,4 +1,4 @@
-package com.sega.todoappweb;
+package com.sega.todoappweb.task;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -520,14 +520,14 @@ public class HomeController {
             principal.getName()
         );
 
-        return "index";
+        return "task/index";
     }
 
     // タスク追加画面
     @GetMapping("/add")
     public String addTask() {
 
-        return "addTask";
+        return "task/addTask";
     }
 
     // タスク追加処理
@@ -571,7 +571,7 @@ public class HomeController {
             task
         );
 
-        return "addScheduleTime";
+        return "task/addScheduleTime";
     }
 
     // 既存の予定に時間・詳細を追加する処理
@@ -745,7 +745,7 @@ public class HomeController {
             id
         );
 
-        return "editTask";
+        return "task/editTask";
     }
 
     // タスク更新処理
