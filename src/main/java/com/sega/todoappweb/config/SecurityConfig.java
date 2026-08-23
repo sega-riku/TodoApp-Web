@@ -18,21 +18,51 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
+            //アクセス権限設定
             .authorizeHttpRequests(auth -> auth
 
-                // Spring Bootのエラー処理を許可
+                //Spring Bootのエラー処理を許可
                 .dispatcherTypeMatchers(
                     DispatcherType.ERROR
                 ).permitAll()
 
-                .requestMatchers("/login", "/register").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                //未ログインでもアクセス可能
+                .requestMatchers(
+                    "/login",
+                    "/register"
+                ).permitAll()
+
+                //管理者のみアクセス可能
+                .requestMatchers("/admin/**")
+                .hasRole("ADMIN")
+
+                //その他はログイン必須
+                .anyRequest()
+                .authenticated()
             )
 
-            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/", true).permitAll())
+            //ログイン設定
+            .formLogin(form -> form
+                .loginPage("/login")
+                .defaultSuccessUrl("/", true)
+                .permitAll()
+            )
 
-            .logout(logout -> logout.logoutSuccessUrl("/login?logout").permitAll());
+            //ログアウト設定
+            .logout(logout -> logout
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
+            )
+
+            //アクセス権限不足時の処理
+            .exceptionHandling(exception -> exception
+
+                //403エラーの場合Todo画面へ戻す
+                .accessDeniedHandler(
+                    (request, response, accessDeniedException) ->
+                        response.sendRedirect("/")
+                )
+            );
 
         return http.build();
     }

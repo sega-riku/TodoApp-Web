@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <style>
+        .form-control::placeholder {
+            color: #b8b8b8;
+            opacity: 1;
+        }
+    </style>
+
+    <title>管理者新規登録</title>
+</head>
+
+<body>
+
+    <div class="container py-5">
+
+        <div
+            class="mx-auto"
+            style="max-width: 600px;">
+
+            <h1 class="text-center mb-4">
+                管理者新規登録
+            </h1>
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <!--ユーザー名未入力エラー-->
+                    <div
+                        th:if="${usernameError}"
+                        class="alert alert-danger text-center"
+                        th:text="${usernameError}">
+                    </div>
+
+                    <!--ユーザー名重複エラー-->
+                    <div
+                        th:if="${usernameDuplicateError}"
+                        class="alert alert-danger text-center"
+                        th:text="${usernameDuplicateError}">
+                    </div>
+
+                    <!--パスワード文字数エラー-->
+                    <div
+                        th:if="${passwordLengthError}"
+                        class="alert alert-danger text-center"
+                        th:text="${passwordLengthError}">
+                    </div>
+
+                    <!--パスワード英字エラー-->
+                    <div
+                        th:if="${passwordLetterError}"
+                        class="alert alert-danger text-center"
+                        th:text="${passwordLetterError}">
+                    </div>
+
+                    <!--パスワード数字エラー-->
+                    <div
+                        th:if="${passwordNumberError}"
+                        class="alert alert-danger text-center"
+                        th:text="${passwordNumberError}">
+                    </div>
+
+                    <!--パスワード不一致エラー-->
+                    <div
+                        th:if="${passwordError}"
+                        class="alert alert-danger text-center"
+                        th:text="${passwordError}">
+                    </div>
+
+                    <!--管理者登録フォーム-->
+                    <form
+                        th:action="@{/admin/register}"
+                        method="post">
+
+                        <!--ユーザー名-->
+                        <div class="mb-3">
+
+                            <label
+                                for="username"
+                                class="form-label">
+                                ユーザー名
+                            </label>
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="form-control"
+                                th:value="${enteredUsername}"
+                                required>
+
+                        </div>
+
+                        <!--パスワード-->
+                        <div class="mb-3">
+
+                            <label
+                                for="password"
+                                class="form-label">
+                                パスワード
+                            </label>
+
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    class="form-control"
+                                    placeholder="英数字8文字以上で入力してください"
+                                    required>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword('password', this)">
+                                    表示
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <!--パスワード確認-->
+                        <div class="mb-4">
+
+                            <label
+                                for="confirmPassword"
+                                class="form-label">
+                                パスワード（確認）
+                            </label>
+
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    class="form-control"
+                                    placeholder="もう一度パスワードを入力してください"
+                                    required>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword('confirmPassword', this)">
+                                    表示
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <!--登録・戻るボタン-->
+                        <div class="d-flex justify-content-center gap-3">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                style="width: 140px;">
+                                登録
+                            </button>
+
+                            <a
+                                th:href="@{/admin}"
+                                class="btn btn-outline-secondary"
+                                style="width: 140px;">
+                                戻る
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--パスワード表示・非表示処理-->
+    <script>
+        function togglePassword(inputId, button) {
+
+            const input =
+                document.getElementById(inputId);
+
+            if (input.type === "password") {
+
+                input.type = "text";
+                button.textContent = "隠す";
+
+            } else {
+
+                input.type = "password";
+                button.textContent = "表示";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

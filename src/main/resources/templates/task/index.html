@@ -24,15 +24,71 @@
 
             <div class="d-flex align-items-center gap-3">
 
-                <!-- ログイン中のユーザー名 -->
-                <span>
-                    <span th:text="${username}">
-                        ユーザー名
-                    </span>
-                    さん
-                </span>
+                <!--ユーザーメニュー-->
+                <div class="dropdown">
 
-                <!-- ログアウト -->
+                    <button
+                        class="btn btn-link text-decoration-none text-dark dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+
+                        <span th:text="${username}">
+                            ユーザー名
+                        </span>
+                        さん
+
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                        <!--ユーザー情報変更ボタン-->
+                        <li>
+                            <button
+                                type="button"
+                                class="dropdown-item"
+                                data-bs-toggle="modal"
+                                data-bs-target="#userEditModal">
+                                ユーザー情報変更
+                            </button>
+                        </li>
+
+                        <!--お問い合わせボタン-->
+                        <li>
+                            <span class="dropdown-item disabled">
+                                お問い合わせ
+                            </span>
+                        </li>
+
+                        <!--区切り線-->
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <!--アカウント削除ボタン-->
+                        <li>
+                            <button
+                                type="button"
+                                class="dropdown-item text-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteAccountModal">
+                                アカウント削除
+                            </button>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+                <!--管理者だったら管理画面ボタン出す-->
+                <a
+                    th:if="${isAdmin}"
+                    th:href="@{/admin}"
+                    class="btn btn-outline-primary">
+                    管理画面
+                </a>
+
+                <!--ログアウト-->
                 <form
                     th:action="@{/logout}"
                     method="post"
@@ -52,7 +108,7 @@
 
         <div class="row">
 
-            <!-- タスク一覧 -->
+            <!--タスク一覧-->
             <div class="col-12 col-lg-8 mb-4 mb-lg-0">
 
                 <form
@@ -60,7 +116,7 @@
                     method="get"
                     class="mb-4">
 
-                    <!-- 検索 -->
+                    <!--検索-->
                     <div class="row g-2 align-items-end mb-3">
 
                         <div class="col-9">
@@ -90,10 +146,10 @@
 
                     </div>
 
-                    <!-- 並び順・表示・タスク追加 -->
+                    <!--並び順・表示・タスク追加-->
                     <div class="row g-2 align-items-end">
 
-                        <!-- 並び順 -->
+                        <!--並び順-->
                         <div class="col-4">
 
                             <label class="form-label">
@@ -106,7 +162,7 @@
 
                         </div>
 
-                        <!-- 表示 -->
+                        <!--表示-->
                         <div class="col-5">
 
                             <label class="form-label">
@@ -140,7 +196,7 @@
 
                         </div>
 
-                        <!-- タスク追加 -->
+                        <!--タスク追加-->
                         <div class="col-3">
 
                             <a
@@ -155,7 +211,7 @@
 
                 </form>
 
-                <!-- 件数表示 -->
+                <!--件数表示-->
                 <p>
                     表示中：
                     <span th:text="${displayedCount}"></span>件
@@ -173,14 +229,14 @@
 
                     <div class="card-body">
 
-                        <!-- タスク名 -->
+                        <!--タスク名-->
                         <h5
                             class="card-title mb-2"
                             th:text="${group.title}">
                             タスク名
                         </h5>
 
-                        <!-- 予定・締切＋日付 -->
+                        <!--予定・締切＋日付-->
                         <p class="card-text mb-3">
 
                             <span
@@ -199,14 +255,14 @@
                         <div
                             th:each="task, stat : ${group.tasks}">
 
-                            <!-- 2件目以降は区切り線 -->
+                            <!--2件目以降は区切り線-->
                             <hr
                                 class="my-2"
                                 th:if="${!stat.first}">
 
                             <div class="d-flex justify-content-between align-items-center">
 
-                                <!-- 時間・詳細 -->
+                                <!--時間・詳細-->
                                 <div>
 
                                     <span th:text="${task.time}">
@@ -223,17 +279,17 @@
 
                                 </div>
 
-                                <!-- 個別操作 -->
+                                <!--個別操作-->
                                 <div class="d-flex">
 
-                                    <!-- 編集 -->
+                                    <!--編集-->
                                     <a
                                         class="btn btn-info text-white btn-sm me-2"
                                         th:href="@{/edit/{id}(id=${task.id})}">
                                         編集
                                     </a>
 
-                                    <!-- 削除 -->
+                                    <!--削除-->
                                     <button
                                         type="button"
                                         class="btn btn-danger btn-sm"
@@ -246,7 +302,7 @@
 
                             </div>
 
-                            <!-- 削除確認モーダル -->
+                            <!--削除確認モーダル-->
                             <div
                                 class="modal fade"
                                 th:id="'deleteModal' + ${task.id}"
@@ -334,7 +390,7 @@
                         <div
                             class="d-flex justify-content-between align-items-center mt-3">
 
-                            <!-- ステータス -->
+                            <!--ステータス-->
                             <span
                                 class="badge"
                                 th:classappend="${group.tasks.get(0).completed
@@ -347,7 +403,7 @@
 
                             <div>
 
-                                <!-- グループ一括完了 -->
+                                <!--グループ一括完了-->
                                 <a
                                     class="btn btn-success btn-sm"
                                     style="width: 100px;"
@@ -356,7 +412,7 @@
                                     完了
                                 </a>
 
-                                <!-- グループ一括未完了 -->
+                                <!--グループ一括未完了-->
                                 <a
                                     class="btn btn-secondary btn-sm"
                                     style="width: 100px;"
@@ -375,21 +431,21 @@
 
             </div>
 
-            <!-- 右側 -->
+            <!--右側-->
             <div class="col-12 col-lg-4">
 
                 <h3 class="mb-4">
                     予定・締切
                 </h3>
 
-                <!-- 予定 -->
+                <!--予定-->
                 <div class="mb-5">
 
                     <h4 class="mb-3">
                         📅 予定
                     </h4>
 
-                    <!-- 予定がない場合 -->
+                    <!--予定がない場合-->
                     <p
                         class="text-secondary"
                         th:if="${scheduleDateGroups.isEmpty()}">
@@ -400,7 +456,7 @@
                         th:each="dateGroup : ${scheduleDateGroups}"
                         class="border rounded p-3 mb-3">
 
-                        <!-- 日付 -->
+                        <!--日付-->
                         <h5
                             class="mb-3"
                             th:text="${#temporals.format(
@@ -412,12 +468,12 @@
 
                         <div th:each="group, stat : ${dateGroup.groups}">
 
-                            <!-- 別タスク名なら区切り線 -->
+                            <!--別タスク名なら区切り線-->
                             <hr
                                 class="my-3"
                                 th:if="${!stat.first}">
 
-                            <!-- 1件 -->
+                            <!--1件-->
                             <div th:if="${group.tasks.size() == 1}">
 
                                 <div>
@@ -438,7 +494,7 @@
 
                                 </div>
 
-                                <!-- 詳細 -->
+                                <!--詳細-->
                                 <div
                                     class="ms-4 mt-1"
                                     th:if="${group.tasks.get(0).description != null
@@ -454,7 +510,7 @@
 
                                 </div>
 
-                                <!-- 時間・詳細追加 -->
+                                <!--時間・詳細追加-->
                                 <div class="mt-2 ms-4">
 
                                     <a
@@ -467,10 +523,10 @@
 
                             </div>
 
-                            <!-- 複数件 -->
+                            <!--複数件-->
                             <div th:if="${group.tasks.size() > 1}">
 
-                                <!-- タスク名 -->
+                                <!--タスク名-->
                                 <div class="fw-semibold mb-1">
 
                                     <span>
@@ -483,7 +539,7 @@
 
                                 </div>
 
-                                <!-- 時間・詳細一覧 -->
+                                <!--時間・詳細一覧-->
                                 <div
                                     class="ms-4"
                                     th:each="task : ${group.tasks}">
@@ -506,7 +562,7 @@
 
                                 </div>
 
-                                <!-- 時間・詳細追加 -->
+                                <!--時間・詳細追加-->
                                 <div class="mt-2 ms-4">
 
                                     <a
@@ -525,14 +581,14 @@
 
                 </div>
 
-                <!-- 締切 -->
+                <!--締切-->
                 <div>
 
                     <h4 class="mb-3">
                         ⏰ 締切
                     </h4>
 
-                    <!-- 締切がない場合 -->
+                    <!--締切がない場合-->
                     <p
                         class="text-secondary"
                         th:if="${deadlineDateGroups.isEmpty()}">
@@ -543,7 +599,7 @@
                         th:each="dateGroup : ${deadlineDateGroups}"
                         class="border rounded p-3 mb-3">
 
-                        <!-- 日付 -->
+                        <!--日付-->
                         <h5
                             class="mb-3"
                             th:text="${#temporals.format(
@@ -555,12 +611,12 @@
 
                         <div th:each="group, stat : ${dateGroup.groups}">
 
-                            <!-- 別タスク名なら区切り線 -->
+                            <!--別タスク名なら区切り線-->
                             <hr
                                 class="my-3"
                                 th:if="${!stat.first}">
 
-                            <!-- 1件 -->
+                            <!--1件-->
                             <div th:if="${group.tasks.size() == 1}">
 
                                 <div
@@ -576,7 +632,7 @@
                                                     : ''
                                     }">
 
-                                    <!-- 緊急度アイコン -->
+                                    <!--緊急度アイコン-->
                                     <span
                                         th:text="${task.expired
                                             ? '🚨'
@@ -585,19 +641,19 @@
                                                 : '⏰'}">
                                     </span>
 
-                                    <!-- 時間 -->
+                                    <!--時間-->
                                     <span th:text="${task.time}">
                                         23:59
                                     </span>
 
-                                    <!-- タスク名 -->
+                                    <!--タスク名-->
                                     <span
                                         class="ms-2 fw-semibold"
                                         th:text="${group.title}">
                                         タスク名
                                     </span>
 
-                                    <!-- 詳細 -->
+                                    <!--詳細-->
                                     <div
                                         class="ms-4 mt-1"
                                         th:if="${task.description != null
@@ -617,10 +673,10 @@
 
                             </div>
 
-                            <!-- 複数件 -->
+                            <!--複数件-->
                             <div th:if="${group.tasks.size() > 1}">
 
-                                <!-- タスク名 -->
+                                <!--タスク名-->
                                 <div class="fw-semibold mb-1">
 
                                     <span>
@@ -633,7 +689,7 @@
 
                                 </div>
 
-                                <!-- 時間・詳細一覧 -->
+                                <!--時間・詳細一覧-->
                                 <div
                                     class="ms-4"
                                     th:each="task : ${group.tasks}">
@@ -650,7 +706,7 @@
                                                         : ''
                                         }">
 
-                                        <!-- 緊急度アイコン -->
+                                        <!--緊急度アイコン-->
                                         <span
                                             th:text="${task.expired
                                                 ? '🚨'
@@ -659,12 +715,12 @@
                                                     : '⏰'}">
                                         </span>
 
-                                        <!-- 時間 -->
+                                        <!--時間-->
                                         <span th:text="${task.time}">
                                             23:59
                                         </span>
 
-                                        <!-- 詳細 -->
+                                        <!--詳細-->
                                         <span
                                             class="ms-2"
                                             th:if="${task.description != null
@@ -691,8 +747,367 @@
 
     </div>
 
+    <!--ユーザー情報変更モーダル-->
+    <div
+        class="modal fade"
+        id="userEditModal"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        ユーザー情報変更
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <form
+                    th:action="@{/user/update}"
+                    method="post">
+
+                    <div class="modal-body">
+
+                        <!--ユーザー情報変更エラー-->
+                        <div
+                            th:if="${userUpdateError}"
+                            class="alert alert-danger"
+                            th:text="${userUpdateError}">
+                        </div>
+
+                        <p class="text-secondary">
+                            変更しない項目は空欄のままにしてください。
+                        </p>
+
+                        <!--ユーザー名変更項目-->
+                        <div class="mb-3">
+
+                            <label
+                                for="newUsername"
+                                class="form-label">
+                                新しいユーザー名
+                            </label>
+
+                            <input
+                                type="text"
+                                id="newUsername"
+                                name="newUsername"
+                                class="form-control"
+                                th:value="${enteredNewUsername}"
+                                placeholder="変更する場合のみ入力">
+
+                        </div>
+
+                        <!--現在のパスワード-->
+                        <div class="mb-3">
+
+                            <label
+                                for="currentPassword"
+                                class="form-label">
+                                現在のパスワード
+                            </label>
+
+                            <input
+                                type="password"
+                                id="currentPassword"
+                                name="currentPassword"
+                                class="form-control"
+                                autocomplete="current-password"
+                                placeholder="パスワードを変更する場合のみ入力">
+
+                        </div>
+
+                        <!--新しいパスワード-->
+                        <div class="mb-3">
+
+                            <label
+                                for="newPassword"
+                                class="form-label">
+                                新しいパスワード
+                            </label>
+
+                            <input
+                                type="password"
+                                id="newPassword"
+                                name="newPassword"
+                                class="form-control"
+                                autocomplete="new-password"
+                                placeholder="英数字8文字以上">
+
+                        </div>
+
+                        <!--新しいパスワード確認-->
+                        <div class="mb-3">
+
+                            <label
+                                for="confirmPassword"
+                                class="form-label">
+                                新しいパスワード（確認）
+                            </label>
+
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                class="form-control"
+                                autocomplete="new-password"
+                                placeholder="もう一度入力">
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                            キャンセル
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary">
+                            変更
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--ユーザー情報変更完了モーダル-->
+    <div
+        class="modal fade"
+        id="userUpdateSuccessModal"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        変更完了
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <p class="mb-0">
+                        ユーザー情報を変更しました。
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        data-bs-dismiss="modal">
+                        OK
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--アカウント削除確認モーダル-->
+    <div
+        class="modal fade"
+        id="deleteAccountModal"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title text-danger">
+                        アカウント削除
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <form
+                    th:action="@{/user/delete}"
+                    method="post">
+
+                    <div class="modal-body">
+
+                        <!--アカウント削除エラー-->
+                        <div
+                            th:if="${accountDeleteError}"
+                            class="alert alert-danger"
+                            th:text="${accountDeleteError}">
+                        </div>
+
+                        <!--削除警告-->
+                        <div class="alert alert-danger">
+
+                            <p class="fw-bold mb-2">
+                                この操作は取り消せません。
+                            </p>
+
+                            <p class="mb-0">
+                                アカウントを削除すると、
+                                ユーザー情報と登録したすべてのタスクが削除されます。
+                            </p>
+
+                        </div>
+
+                        <p>
+                            本当にアカウントを削除する場合は、
+                            現在のパスワードを入力してください。
+                        </p>
+
+                        <!--現在のパスワード-->
+                        <div class="mb-3">
+
+                            <label
+                                for="deletePassword"
+                                class="form-label">
+                                現在のパスワード
+                            </label>
+
+                            <input
+                                type="password"
+                                id="deletePassword"
+                                name="deletePassword"
+                                class="form-control"
+                                autocomplete="current-password"
+                                required>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                            キャンセル
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger">
+                            アカウントを削除
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--Bootstrap JavaScript-->
     <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!--ユーザー情報変更・アカウント削除結果モーダル表示処理-->
+    <script th:inline="javascript">
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                const userUpdateSuccess =
+                    /*[[${userUpdateSuccess != null}]]*/ false;
+
+                const userUpdateError =
+                    /*[[${userUpdateError != null}]]*/ false;
+
+                const accountDeleteError =
+                    /*[[${accountDeleteError != null}]]*/ false;
+
+                //ユーザー情報変更成功時
+                if (userUpdateSuccess) {
+
+                    const successModal =
+                        new bootstrap.Modal(
+                            document.getElementById(
+                                "userUpdateSuccessModal"
+                            )
+                        );
+
+                    successModal.show();
+
+                //ユーザー情報変更失敗時
+                } else if (userUpdateError) {
+
+                    const editModal =
+                        new bootstrap.Modal(
+                            document.getElementById(
+                                "userEditModal"
+                            )
+                        );
+
+                    editModal.show();
+
+                //アカウント削除失敗時
+                } else if (accountDeleteError) {
+
+                    const deleteModal =
+                        new bootstrap.Modal(
+                            document.getElementById(
+                                "deleteAccountModal"
+                            )
+                        );
+
+                    deleteModal.show();
+                }
+            }
+        );
+
     </script>
 
 </body>

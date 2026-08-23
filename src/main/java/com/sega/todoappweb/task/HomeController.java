@@ -16,13 +16,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 
+import com.sega.todoappweb.user.User;
+import com.sega.todoappweb.user.UserRepository;
+
 @Controller
 public class HomeController {
 
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    public HomeController(TaskRepository taskRepository) {
+    public HomeController(
+        TaskRepository taskRepository,
+        UserRepository userRepository
+    ) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
     // メイン画面処理
@@ -34,7 +42,15 @@ public class HomeController {
         Principal principal
     ) {
 
-        List<Task> tasks = taskRepository.findAll();
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
+
+        // ログインユーザーのタスク取得処理
+        List<Task> tasks =
+            taskRepository.findByUser(loginUser);
 
         // 通常一覧に表示してよいタスク
         ArrayList<Task> visibleTasks = new ArrayList<>();
@@ -515,9 +531,19 @@ public class HomeController {
             LocalDate.now().plusDays(3)
         );
 
+        // ログインユーザー名表示処理
         model.addAttribute(
             "username",
-            principal.getName()
+            loginUser.getUsername()
+        );
+
+        // 管理者判定処理
+        boolean isAdmin =
+            "ADMIN".equals(loginUser.getRole());
+
+        model.addAttribute(
+            "isAdmin",
+            isAdmin
         );
 
         return "task/index";
@@ -537,8 +563,15 @@ public class HomeController {
         @RequestParam LocalDate deadline,
         @RequestParam LocalTime time,
         @RequestParam DateType dateType,
-        @RequestParam(required = false) String description
+        @RequestParam(required = false) String description,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             new Task(
@@ -549,6 +582,9 @@ public class HomeController {
                 description
             );
 
+        // タスク所有ユーザー設定
+        task.setUser(loginUser);
+
         taskRepository.save(task);
 
         return "redirect:/";
@@ -558,13 +594,30 @@ public class HomeController {
     @GetMapping("/schedule/add/{id}")
     public String addScheduleTime(
         @PathVariable Long id,
-        Model model
+        Model model,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         model.addAttribute(
             "task",
@@ -579,13 +632,30 @@ public class HomeController {
     public String addScheduleTime(
         @PathVariable Long id,
         @RequestParam LocalTime time,
-        @RequestParam(required = false) String description
+        @RequestParam(required = false) String description,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task baseTask =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            baseTask.getUser() == null
+            || !baseTask.getUser()
+                        .getId()
+                        .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         Task newTask =
             new Task(
@@ -596,6 +666,9 @@ public class HomeController {
                 description
             );
 
+        // タスク所有ユーザー設定
+        newTask.setUser(loginUser);
+
         taskRepository.save(newTask);
 
         return "redirect:/";
@@ -604,13 +677,30 @@ public class HomeController {
     // 個別タスク完了処理
     @GetMapping("/complete/{id}")
     public String completeTask(
-        @PathVariable Long id
+        @PathVariable Long id,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         task.complete();
 
@@ -622,13 +712,30 @@ public class HomeController {
     // 個別タスクを未完了に戻す処理
     @GetMapping("/incomplete/{id}")
     public String incompleteTask(
-        @PathVariable Long id
+        @PathVariable Long id,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         task.incomplete();
 
@@ -640,16 +747,34 @@ public class HomeController {
     // グループ一括完了処理
     @GetMapping("/complete/group/{id}")
     public String completeTaskGroup(
-        @PathVariable Long id
+        @PathVariable Long id,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task baseTask =
             taskRepository
                 .findById(id)
                 .orElseThrow();
 
+        // タスク所有ユーザー確認処理
+        if (
+            baseTask.getUser() == null
+            || !baseTask.getUser()
+                        .getId()
+                        .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
+
+        // ログインユーザーのタスク取得処理
         List<Task> tasks =
-            taskRepository.findAll();
+            taskRepository.findByUser(loginUser);
 
         for (Task task : tasks) {
 
@@ -683,16 +808,34 @@ public class HomeController {
     // グループ一括未完了処理
     @GetMapping("/incomplete/group/{id}")
     public String incompleteTaskGroup(
-        @PathVariable Long id
+        @PathVariable Long id,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task baseTask =
             taskRepository
                 .findById(id)
                 .orElseThrow();
 
+        // タスク所有ユーザー確認処理
+        if (
+            baseTask.getUser() == null
+            || !baseTask.getUser()
+                        .getId()
+                        .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
+
+        // ログインユーザーのタスク取得処理
         List<Task> tasks =
-            taskRepository.findAll();
+            taskRepository.findByUser(loginUser);
 
         for (Task task : tasks) {
 
@@ -727,13 +870,30 @@ public class HomeController {
     @GetMapping("/edit/{id}")
     public String editTask(
         @PathVariable Long id,
-        Model model
+        Model model,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         model.addAttribute(
             "task",
@@ -756,13 +916,30 @@ public class HomeController {
         @RequestParam LocalDate deadline,
         @RequestParam LocalTime time,
         @RequestParam DateType dateType,
-        @RequestParam(required = false) String description
+        @RequestParam(required = false) String description,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
 
         Task task =
             taskRepository
                 .findById(id)
                 .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         task.setTitle(title);
         task.setDeadline(deadline);
@@ -778,8 +955,30 @@ public class HomeController {
     // タスク削除処理
     @GetMapping("/delete/{id}")
     public String deleteTask(
-        @PathVariable Long id
+        @PathVariable Long id,
+        Principal principal
     ) {
+
+        // ログインユーザー取得処理
+        User loginUser =
+            userRepository
+                .findByUsername(principal.getName())
+                .orElseThrow();
+
+        Task task =
+            taskRepository
+                .findById(id)
+                .orElseThrow();
+
+        // タスク所有ユーザー確認処理
+        if (
+            task.getUser() == null
+            || !task.getUser()
+                    .getId()
+                    .equals(loginUser.getId())
+        ) {
+            return "redirect:/";
+        }
 
         taskRepository.deleteById(id);
 

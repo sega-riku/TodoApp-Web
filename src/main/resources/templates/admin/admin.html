@@ -53,9 +53,19 @@
 
             <div class="col-12 col-lg-8">
 
-                <h3 class="mb-3">
-                    ユーザー管理
-                </h3>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <h3 class="mb-0">
+                        ユーザー管理
+                    </h3>
+
+                    <a
+                        th:href="@{/admin/register}"
+                        class="btn btn-primary">
+                        ＋ 管理者追加
+                    </a>
+
+                </div>
 
                 <div class="card">
 
@@ -118,11 +128,52 @@
             <div class="col-12 col-lg-4">
 
                 <h3 class="mb-3">
+                    お知らせ・履歴
+                </h3>
+
+                <div class="card mb-4">
+
+                    <div class="card-body">
+
+                        <p
+                            th:if="${notifications.isEmpty()}"
+                            class="text-secondary mb-0">
+                            お知らせはありません。
+                        </p>
+
+                        <div
+                            th:each="notification, stat : ${notifications}">
+
+                            <hr
+                                class="my-3"
+                                th:if="${!stat.first}">
+
+                            <div
+                                class="small text-secondary mb-1"
+                                th:text="${#temporals.format(
+                                    notification.createdAt,
+                                    'yyyy-MM-dd HH:mm'
+                                )}">
+                                2026-08-20 19:30
+                            </div>
+
+                            <div th:text="${notification.message}">
+                                user1さんがパスワードを変更しました。
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <h3 class="mb-3">
                     管理サマリー
                 </h3>
 
                 <!--ユーザー数管理サマリ-->
                 <div class="card mb-3">
+
                     <div class="card-body">
 
                         <div class="text-secondary mb-1">
@@ -134,10 +185,12 @@
                         </div>
 
                     </div>
+
                 </div>
 
                 <!--管理者数管理サマリ-->
                 <div class="card mb-3">
+
                     <div class="card-body">
 
                         <div class="text-secondary mb-1">
@@ -149,10 +202,12 @@
                         </div>
 
                     </div>
+
                 </div>
 
                 <!--ユーザー管理サマリ-->
                 <div class="card mb-3">
+
                     <div class="card-body">
 
                         <div class="text-secondary mb-1">
@@ -164,6 +219,7 @@
                         </div>
 
                     </div>
+
                 </div>
 
             </div>
