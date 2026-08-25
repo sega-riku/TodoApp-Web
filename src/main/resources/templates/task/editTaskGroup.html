@@ -9,7 +9,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
-    <title>タスク編集</title>
+    <title>タスク全体編集</title>
 </head>
 
 <body>
@@ -25,11 +25,16 @@
                     <div class="card-body">
 
                         <h2 class="card-title mb-4">
-                            タスク編集
+                            タスク全体編集
                         </h2>
 
+                        <p class="text-secondary mb-4">
+                            このタスクに登録されている
+                            すべての時間・詳細に共通する情報を変更します。
+                        </p>
+
                         <form
-                            th:action="@{/edit/{id}(id=${task.id})}"
+                            th:action="@{/edit/group/{id}(id=${task.id})}"
                             method="post">
 
                             <!--タスク名-->
@@ -49,7 +54,7 @@
                             </div>
 
                             <!--予定・締切区分 + 日付-->
-                            <div class="row g-3 mb-3">
+                            <div class="row g-3 mb-4">
 
                                 <!--予定・締切区分-->
                                 <div class="col-4">
@@ -65,13 +70,15 @@
 
                                         <option
                                             value="SCHEDULE"
-                                            th:selected="${task.dateType == T(com.sega.todoappweb.task.DateType).SCHEDULE}">
+                                            th:selected="${task.dateType
+                                                == T(com.sega.todoappweb.task.DateType).SCHEDULE}">
                                             予定
                                         </option>
 
                                         <option
                                             value="DEADLINE"
-                                            th:selected="${task.dateType == T(com.sega.todoappweb.task.DateType).DEADLINE}">
+                                            th:selected="${task.dateType
+                                                == T(com.sega.todoappweb.task.DateType).DEADLINE}">
                                             締切
                                         </option>
 
@@ -98,56 +105,36 @@
 
                             </div>
 
-                            <!--時間-->
-                            <div class="mb-4">
+                            <!--変更対象の説明-->
+                            <div class="alert alert-info">
 
-                                <label class="form-label">
-                                    時間
-                                    <span class="text-secondary">
-                                        (任意)
-                                    </span>
-                                </label>
+                                <p class="mb-1 fw-semibold">
+                                    変更される項目
+                                </p>
 
-                                <input
-                                    type="time"
-                                    name="time"
-                                    class="form-control"
-                                    th:value="${task.time}"
-                                    onclick="this.showPicker()">
+                                <p class="mb-0">
+                                    タスク名・予定/締切区分・日付が、
+                                    同じグループ内のすべての予定・締切に反映されます。
+                                </p>
 
                             </div>
 
-                            <!--詳細・備考-->
-                            <div class="mb-4">
+                            <!--ボタン-->
+                            <div class="d-flex gap-2">
 
-                                <label class="form-label">
-                                    詳細・備考
-                                    <span class="text-secondary">
-                                        (任意)
-                                    </span>
-                                </label>
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary">
+                                    変更
+                                </button>
 
-                                <textarea
-                                    name="description"
-                                    class="form-control"
-                                    rows="3"
-                                    placeholder="詳細やメモを入力"
-                                    th:text="${task.description}">
-                                </textarea>
+                                <a
+                                    th:href="@{/}"
+                                    class="btn btn-secondary">
+                                    一覧へ戻る
+                                </a>
 
                             </div>
-
-                            <button
-                                type="submit"
-                                class="btn btn-info text-white me-2">
-                                更新
-                            </button>
-
-                            <a
-                                th:href="@{/}"
-                                class="btn btn-secondary">
-                                一覧へ戻る
-                            </a>
 
                         </form>
 

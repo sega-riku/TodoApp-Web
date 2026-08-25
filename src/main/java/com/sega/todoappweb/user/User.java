@@ -19,6 +19,7 @@ public class User {
     private String password;
     private String role;
     private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
 
     // JPA用
     public User() {
@@ -29,6 +30,7 @@ public class User {
         this.password = password;
         this.role = role;
         this.createdAt = LocalDateTime.now();
+        this.lastLoginAt = null;
     }
 
     //getter
@@ -52,6 +54,10 @@ public class User {
         return createdAt;
     }
 
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
     //setter
     public void setUsername(String username) {
         this.username = username;
@@ -63,5 +69,9 @@ public class User {
 
     public void setRole(String role){
         this.role = role;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 }

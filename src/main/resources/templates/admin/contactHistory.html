@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>対応済みお問い合わせ履歴</title>
+</head>
+
+<body>
+
+    <div class="container py-4">
+
+        <!--ヘッダー-->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h1 class="mb-1">
+                    対応済みお問い合わせ履歴
+                </h1>
+
+                <div class="text-secondary">
+                    対応が完了したお問い合わせを確認できます。
+                </div>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+
+                <span>
+                    <span th:text="${username}">
+                        ユーザー名
+                    </span>
+                    さん
+                </span>
+
+                <a
+                    th:href="@{/admin}"
+                    class="btn btn-outline-secondary">
+                    管理画面へ戻る
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!--対応済みお問い合わせ一覧-->
+        <div class="card">
+
+            <div class="card-body">
+
+                <!--履歴がない場合-->
+                <p
+                    th:if="${completedContacts.isEmpty()}"
+                    class="text-secondary mb-0">
+                    対応済みのお問い合わせはありません。
+                </p>
+
+
+                <!--履歴がある場合-->
+                <div
+                    class="table-responsive"
+                    th:if="${!completedContacts.isEmpty()}">
+
+                    <table class="table align-middle mb-0">
+
+                        <thead>
+
+                            <tr>
+                                <th>お問い合わせ者</th>
+                                <th>区分</th>
+                                <th>お問い合わせ日</th>
+                                <th>対応完了日</th>
+                                <th>詳細</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr th:each="contact : ${completedContacts}">
+
+                                <!--お問い合わせ者-->
+                                <td th:text="${contact.username}">
+                                    user1
+                                </td>
+
+                                <!--区分-->
+                                <td
+                                    th:text="${contact.contactType.name() == 'QUESTION'
+                                        ? '質問'
+                                        : '意見'}">
+                                    質問
+                                </td>
+
+                                <!--お問い合わせ日-->
+                                <td
+                                    th:text="${#temporals.format(
+                                        contact.createdAt,
+                                        'yyyy/MM/dd HH:mm'
+                                    )}">
+                                    2026/08/24 16:30
+                                </td>
+
+                                <!--対応完了日-->
+                                <td
+                                    th:text="${contact.completedAt != null
+                                        ? #temporals.format(
+                                            contact.completedAt,
+                                            'yyyy/MM/dd HH:mm'
+                                        )
+                                        : '-'}">
+                                    2026/08/24 18:30
+                                </td>
+
+                                <!--詳細-->
+                                <td>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#contactHistoryModal' + ${contact.id}">
+                                        詳細
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--お問い合わせ詳細モーダル-->
+    <div
+        th:each="contact : ${completedContacts}"
+        class="modal fade"
+        th:id="'contactHistoryModal' + ${contact.id}"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        お問い合わせ詳細
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <!--お問い合わせ者-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            お問い合わせ者
+                        </div>
+
+                        <div
+                            class="fw-semibold"
+                            th:text="${contact.username}">
+                            user1
+                        </div>
+
+                    </div>
+
+
+                    <!--区分-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            区分
+                        </div>
+
+                        <div
+                            th:text="${contact.contactType.name() == 'QUESTION'
+                                ? '質問'
+                                : '意見'}">
+                            質問
+                        </div>
+
+                    </div>
+
+
+                    <!--お問い合わせ日時-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            お問い合わせ日時
+                        </div>
+
+                        <div
+                            th:text="${#temporals.format(
+                                contact.createdAt,
+                                'yyyy/MM/dd HH:mm'
+                            )}">
+                            2026/08/24 16:30
+                        </div>
+
+                    </div>
+
+
+                    <!--対応完了日時-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            対応完了日時
+                        </div>
+
+                        <div
+                            th:text="${contact.completedAt != null
+                                ? #temporals.format(
+                                    contact.completedAt,
+                                    'yyyy/MM/dd HH:mm'
+                                )
+                                : '-'}">
+                            2026/08/24 18:30
+                        </div>
+
+                    </div>
+
+
+                    <!--対応ステータス-->
+                    <div class="mb-4">
+
+                        <div class="text-secondary small mb-1">
+                            対応ステータス
+                        </div>
+
+                        <span class="badge rounded-pill text-bg-success">
+                            対応済み
+                        </span>
+
+                    </div>
+
+
+                    <!--お問い合わせ内容-->
+                    <div class="mb-4">
+
+                        <div class="text-secondary small mb-2">
+                            お問い合わせ内容
+                        </div>
+
+                        <div
+                            class="border rounded p-3 bg-light"
+                            style="white-space: pre-wrap;"
+                            th:text="${contact.content}">
+                            お問い合わせ内容がここに表示されます。
+                        </div>
+
+                    </div>
+
+
+                    <!--回答・対応内容-->
+                    <div>
+
+                        <div class="text-secondary small mb-2">
+                            回答・対応内容
+                        </div>
+
+                        <div
+                            class="border rounded p-3 bg-light"
+                            style="white-space: pre-wrap;"
+                            th:text="${contact.response}">
+                            回答・対応内容がここに表示されます。
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        閉じる
+                    </button>
+
+                    <!--対応中に戻す-->
+                    <button
+                        type="button"
+                        class="btn btn-warning"
+                        data-bs-toggle="modal"
+                        th:data-bs-target="'#restoreInProgressModal' + ${contact.id}">
+                        対応中に戻す
+                    </button>
+
+                    <!--未対応に戻す-->
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        th:data-bs-target="'#restoreUnhandledModal' + ${contact.id}">
+                        未対応に戻す
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--対応中に戻す確認モーダル-->
+    <div
+        th:each="contact : ${completedContacts}"
+        class="modal fade"
+        th:id="'restoreInProgressModal' + ${contact.id}"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        対応中に戻す
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <p>
+                        このお問い合わせを対応中に戻しますか？
+                    </p>
+
+                    <p class="text-secondary mb-0">
+                        対応完了日時は解除され、通常のお問い合わせ一覧へ戻ります。
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        キャンセル
+                    </button>
+
+                    <form
+                        th:action="@{/admin/contact/history/status/{id}(id=${contact.id})}"
+                        method="post"
+                        class="mb-0">
+
+                        <input
+                            type="hidden"
+                            name="status"
+                            value="IN_PROGRESS">
+
+                        <button
+                            type="submit"
+                            class="btn btn-warning">
+                            対応中に戻す
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--未対応に戻す確認モーダル-->
+    <div
+        th:each="contact : ${completedContacts}"
+        class="modal fade"
+        th:id="'restoreUnhandledModal' + ${contact.id}"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        未対応に戻す
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <p>
+                        このお問い合わせを未対応に戻しますか？
+                    </p>
+
+                    <p class="text-secondary mb-0">
+                        対応完了日時は解除され、通常のお問い合わせ一覧へ戻ります。
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        キャンセル
+                    </button>
+
+                    <form
+                        th:action="@{/admin/contact/history/status/{id}(id=${contact.id})}"
+                        method="post"
+                        class="mb-0">
+
+                        <input
+                            type="hidden"
+                            name="status"
+                            value="UNHANDLED">
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger">
+                            未対応に戻す
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--Bootstrap JavaScript-->
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+
+</html>

@@ -28,9 +28,11 @@
                             タスク追加
                         </h2>
 
-                        <form th:action="@{/add}" method="post">
+                        <form
+                            th:action="@{/add}"
+                            method="post">
 
-                            <!-- タスク名 -->
+                            <!--タスク名-->
                             <div class="mb-3">
 
                                 <label class="form-label">
@@ -45,9 +47,10 @@
 
                             </div>
 
-                            <!-- 区分 + 日付 -->
+                            <!--予定・締切区分 + 日付-->
                             <div class="row g-3 mb-3">
 
+                                <!--予定・締切区分-->
                                 <div class="col-4">
 
                                     <label class="form-label">
@@ -71,40 +74,62 @@
 
                                 </div>
 
+                                <!--日付-->
                                 <div class="col-8">
 
                                     <label class="form-label">
                                         日付
                                     </label>
 
+                                    <!--通常のタスク追加の場合-->
                                     <input
+                                        th:if="${selectedDeadline == null}"
                                         type="date"
                                         name="deadline"
                                         class="form-control"
                                         onclick="this.showPicker()"
                                         required>
 
+                                    <!--この日のタスク追加の場合-->
+                                    <input
+                                        th:if="${selectedDeadline != null}"
+                                        type="date"
+                                        class="form-control"
+                                        th:value="${selectedDeadline}"
+                                        disabled>
+
+                                    <!--固定日付送信用-->
+                                    <input
+                                        th:if="${selectedDeadline != null}"
+                                        type="hidden"
+                                        name="deadline"
+                                        th:value="${selectedDeadline}">
+
                                 </div>
 
                             </div>
 
-                            <!-- 時間 -->
+                            <!--時間-->
                             <div class="mb-4">
 
                                 <label class="form-label">
                                     時間
+                                    <span class="text-secondary">
+                                        (任意)
+                                    </span>
                                 </label>
 
                                 <input
                                     type="time"
                                     name="time"
                                     class="form-control"
-                                    onclick="this.showPicker()"
-                                    required>
+                                    onclick="this.showPicker()">
 
                             </div>
 
+                            <!--詳細・備考-->
                             <div class="mb-4">
+
                                 <label class="form-label">
                                     詳細・備考
                                     <span class="text-secondary">
@@ -112,7 +137,13 @@
                                     </span>
                                 </label>
 
-                                <textarea name="description" class="form-control" rows="3" placeholder="詳細やメモを入力"></textarea>
+                                <textarea
+                                    name="description"
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="詳細やメモを入力">
+                                </textarea>
+
                             </div>
 
                             <button

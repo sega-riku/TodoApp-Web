@@ -9,7 +9,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
-    <title>予定追加</title>
+    <title>時間・詳細追加</title>
 </head>
 
 <body>
@@ -28,50 +28,93 @@
                             時間・詳細を追加
                         </h2>
 
-                        <!-- 元の予定情報 -->
+                        <!--元のタスク情報-->
                         <div class="mb-4">
 
+                            <!--タスク名-->
                             <p class="mb-2">
-                                <strong>タスク名：</strong>
+
+                                <strong>
+                                    タスク名：
+                                </strong>
+
                                 <span th:text="${task.title}">
                                     タスク名
                                 </span>
+
                             </p>
 
+                            <!--予定・締切区分-->
+                            <p class="mb-2">
+
+                                <strong>
+                                    区分：
+                                </strong>
+
+                                <span
+                                    th:text="${task.dateType
+                                        == T(com.sega.todoappweb.task.DateType).SCHEDULE
+                                        ? '📅 予定'
+                                        : '⏰ 締切'}">
+                                    📅 予定
+                                </span>
+
+                            </p>
+
+                            <!--日付-->
                             <p class="mb-0">
-                                <strong>日付：</strong>
+
+                                <strong>
+                                    日付：
+                                </strong>
+
                                 <span th:text="${task.deadline}">
                                     2026-08-31
                                 </span>
+
                             </p>
 
                         </div>
 
+                        <!--入力エラー-->
+                        <div
+                            th:if="${taskTimeAddError}"
+                            class="alert alert-danger"
+                            th:text="${taskTimeAddError}">
+                            時間または詳細を入力してください。
+                        </div>
+
+                        <!--時間・詳細追加フォーム-->
                         <form
-                            th:action="@{/schedule/add/{id}(id=${task.id})}"
+                            th:action="@{/task/time/add/{id}(id=${task.id})}"
                             method="post">
 
-                            <!-- 時間 -->
+                            <!--時間-->
                             <div class="mb-3">
 
                                 <label class="form-label">
                                     時間
+                                    <span class="text-secondary">
+                                        (任意)
+                                    </span>
                                 </label>
 
                                 <input
                                     type="time"
                                     name="time"
                                     class="form-control"
-                                    onclick="this.showPicker()"
-                                    required>
+                                    onclick="this.showPicker()">
 
                             </div>
 
-                            <!-- 詳細・備考 -->
+                            <!--詳細・備考-->
                             <div class="mb-4">
 
                                 <label class="form-label">
-                                    詳細・備考（任意）
+                                    詳細・備考
+                                    <span class="text-secondary">
+                                        (任意)
+                                    </span>
                                 </label>
 
                                 <textarea
@@ -82,12 +125,18 @@
 
                             </div>
 
+                            <p class="text-secondary small">
+                                時間または詳細のどちらかを入力してください。
+                            </p>
+
+                            <!--追加-->
                             <button
                                 type="submit"
                                 class="btn btn-success me-2">
                                 追加
                             </button>
 
+                            <!--一覧へ戻る-->
                             <a
                                 th:href="@{/}"
                                 class="btn btn-secondary">

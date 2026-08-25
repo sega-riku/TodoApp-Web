@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -16,6 +17,10 @@ import java.security.Principal;
 
 import com.sega.todoappweb.user.User;
 import com.sega.todoappweb.user.UserRepository;
+import com.sega.todoappweb.task.TaskRepository;
+import com.sega.todoappweb.contact.Contact;
+import com.sega.todoappweb.contact.ContactRepository;
+import com.sega.todoappweb.contact.ContactStatus;
 
 @Controller
 public class AdminController {
@@ -23,62 +28,63 @@ public class AdminController {
     private final UserRepository userRepository;
     private final AdminNotificationRepository adminNotificationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TaskRepository taskRepository;
+    private final ContactRepository contactRepository;
 
     public AdminController(
         UserRepository userRepository,
         AdminNotificationRepository adminNotificationRepository,
-        PasswordEncoder passwordEncoder
+        PasswordEncoder passwordEncoder,
+        TaskRepository taskRepository,
+        ContactRepository contactRepository
     ) {
         this.userRepository = userRepository;
         this.adminNotificationRepository = adminNotificationRepository;
         this.passwordEncoder = passwordEncoder;
+        this.taskRepository = taskRepository;
+        this.contactRepository = contactRepository;
     }
 
     //管理者画面
     @GetMapping("/admin")
     public String admin(
+        @RequestParam(required = false) Boolean newContact,
         Model model,
         Principal principal
     ) {
 
         List<User> users = userRepository.findAll();
 
-        model.addAttribute(
-            "users",
-            users
-        );
-
-        model.addAttribute(
-            "username",
-            principal.getName()
-        );
+        model.addAttribute("users",users);
+        model.addAttribute("username",principal.getName());
 
         long totalUsers = users.size();
 
         //管理者数カウント処理
-        long adminCount = users.stream()
-            .filter(user -> "ADMIN".equals(user.getRole()))
-            .count();
+        long adminCount =
+            users.stream()
+                .filter(
+                    user ->
+                        "ADMIN".equals(
+                            user.getRole()
+                        )
+                )
+                .count();
 
         //ユーザー数カウント処理
-        long userCount = users.stream()
-            .filter(user -> "USER".equals(user.getRole()))
-            .count();
+        long userCount =
+            users.stream()
+                .filter(
+                    user ->
+                        "USER".equals(
+                            user.getRole()
+                        )
+                )
+                .count();
 
-        model.addAttribute(
-            "totalUsers",
-            totalUsers
-        );
-
-        model.addAttribute(
-            "adminCount",
-            adminCount
-        );
-
-        model.addAttribute(
-            "userCount",
-            userCount
-        );
+        model.addAttribute("totalUsers",totalUsers);
+        model.addAttribute("adminCount",adminCount);
+        model.addAttribute("userCount",userCount);
 
         //管理者向けお知らせ取得処理
         List<AdminNotification> notifications =
@@ -92,20 +98,213 @@ public class AdminController {
 
         //最新5件まで表示
         if (notifications.size() > 5) {
-
-            notifications =
-                new ArrayList<>(
-                    notifications.subList(0, 5)
-                );
+            notifications = new ArrayList<>(notifications.subList(0,5));
         }
 
+        model.addAttribute("notifications",notifications);
+
+        //未対応・対応中お問い合わせ取得処理
+        List<Contact> contacts =
+            contactRepository.findByStatusNot(
+                ContactStatus.COMPLETED
+            );
+
+        //お問い合わせ日降順処理
+        contacts.sort(
+            Comparator.comparing(
+                Contact::getCreatedAt
+            ).reversed()
+        );
+
+        model.addAttribute("contacts",contacts);
+
+        //新しいお問い合わせ通知判定
         model.addAttribute(
-            "notifications",
-            notifications
+            "newContact",
+            Boolean.TRUE.equals(
+                newContact
+            )
         );
 
         return "admin/admin";
     }
+
+    //対応済みお問い合わせ履歴画面
+    @GetMapping("/admin/contact/history")
+    public String contactHistory(
+        Model model,
+        Principal principal
+    ) {
+
+        //対応済みお問い合わせ取得処理
+        List<Contact> completedContacts =
+            contactRepository.findByStatus(
+                ContactStatus.COMPLETED
+            );
+
+        //対応完了日降順処理
+        completedContacts.sort(
+            Comparator.comparing(
+                Contact::getCompletedAt,
+                Comparator.nullsLast(
+                    Comparator.naturalOrder()
+                )
+            ).reversed()
+        );
+
+        model.addAttribute(
+            "completedContacts",
+            completedContacts
+        );
+
+        model.addAttribute(
+            "username",
+            principal.getName()
+        );
+
+        return "admin/contactHistory";
+    }
+
+    //お問い合わせ対応内容・ステータス変更処理
+    @PostMapping("/admin/contact/status/{id}")
+    public String updateContactStatus(
+        @PathVariable Long id,
+        @RequestParam ContactStatus status,
+        @RequestParam(required = false) String response,
+        RedirectAttributes redirectAttributes
+    ) {
+
+        //お問い合わせ取得処理
+        Contact contact =
+            contactRepository
+                .findById(id)
+                .orElse(null);
+
+        //存在しないお問い合わせの場合は管理画面へ戻す
+        if (contact == null) {
+            return "redirect:/admin";
+        }
+
+        //対応済み時の対応内容空白チェック
+        if (
+            status == ContactStatus.COMPLETED
+            && (
+                response == null
+                || response.isBlank()
+            )
+        ) {
+
+            redirectAttributes.addFlashAttribute(
+                "contactResponseError",
+                "対応済みにする場合は、回答・対応内容を入力してください。"
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "contactResponseErrorId",
+                id
+            );
+
+            return "redirect:/admin";
+        }
+
+        //対応内容保存処理
+        if (
+            response != null
+            && !response.isBlank()
+        ) {
+
+            contact.setResponse(
+                response.trim()
+            );
+        }
+
+        //対応ステータス変更処理
+        contact.setStatus(
+            status
+        );
+
+        //お問い合わせ保存処理
+        contactRepository.save(
+            contact
+        );
+
+        return "redirect:/admin";
+    }
+
+    //対応済みお問い合わせを通常一覧へ戻す処理
+    @PostMapping("/admin/contact/history/status/{id}")
+    public String restoreContactStatus(
+        @PathVariable Long id,
+        @RequestParam ContactStatus status
+    ) {
+
+    //お問い合わせ取得処理
+    Contact contact =
+        contactRepository
+            .findById(id)
+            .orElse(null);
+
+        //存在しないお問い合わせの場合は履歴画面へ戻す
+        if (contact == null) {
+            return "redirect:/admin/contact/history";
+        }
+
+        //対応済み以外への変更のみ許可
+        if (status == ContactStatus.COMPLETED) {
+            return "redirect:/admin/contact/history";
+        }
+
+        //対応ステータス変更処理
+        contact.setStatus(
+            status
+        );
+
+        //お問い合わせ保存処理
+        contactRepository.save(
+            contact
+        );
+
+        return "redirect:/admin/contact/history";
+    }
+
+    @PostMapping("/admin/contact/reply/{id}")
+    public String replyContact(
+        @PathVariable Long id,
+        @RequestParam String reply,
+        Principal principal,
+        RedirectAttributes redirectAttributes
+    ){
+        //お問い合わせ取得処理
+        Contact contact = contactRepository.findById(id).orElse(null);
+
+        //存在しないお問い合わせの場合は管理画面へ戻す
+        if(contact == null){
+            return "redirect:/admin";
+        }
+        //返信内容空白チェック
+        if(reply == null || reply.isBlank()){
+            redirectAttributes.addFlashAttribute("contactReplyError","返信内容を入力してください");
+            redirectAttributes.addFlashAttribute("contactReplyErrorId",id);
+            return "redirect:/admin";
+        }
+
+        //返信済みチェック
+        if(contact.getReply() != null){
+            redirectAttributes.addFlashAttribute("contactReplyError","このお問い合わせは既に返信しています");
+            redirectAttributes.addFlashAttribute("contactReplyErrorId",id);
+            return "redirect:/admin";
+        }
+
+        //ユーザーへの返信設定処理
+        contact.reply(reply.trim(), principal.getName());
+
+        //お問い合わせ保存処理
+        contactRepository.save(contact);
+        redirectAttributes.addFlashAttribute("contactReplySuccess","ユーザーへ返信しました。");
+
+        return "redirect:/admin";
+    }
+    
 
     //ユーザー詳細画面処理
     @GetMapping("/admin/users/{id}")
@@ -116,9 +315,10 @@ public class AdminController {
     ) {
 
         //ユーザー取得処理
-        User user = userRepository
-            .findById(id)
-            .orElse(null);
+        User user =
+            userRepository
+                .findById(id)
+                .orElse(null);
 
         //存在しないユーザーIDの場合は管理画面へ戻す
         if (user == null) {
@@ -139,6 +339,7 @@ public class AdminController {
     }
 
     //ユーザー削除処理
+    @Transactional
     @GetMapping("/admin/users/delete/{id}")
     public String deleteUser(
         @PathVariable Long id,
@@ -147,9 +348,10 @@ public class AdminController {
     ) {
 
         //削除対象ユーザー取得処理
-        User user = userRepository
-            .findById(id)
-            .orElse(null);
+        User user =
+            userRepository
+                .findById(id)
+                .orElse(null);
 
         //存在しないユーザーIDの場合は管理画面へ戻す
         if (user == null) {
@@ -157,7 +359,12 @@ public class AdminController {
         }
 
         //ログイン中の管理者自身は削除しない
-        if (user.getUsername().equals(principal.getName())) {
+        if (
+            user.getUsername()
+                .equals(
+                    principal.getName()
+                )
+        ) {
 
             redirectAttributes.addFlashAttribute(
                 "selfDeleteError",
@@ -167,8 +374,15 @@ public class AdminController {
             return "redirect:/admin/users/" + id;
         }
 
+        //ユーザーのタスク削除処理
+        taskRepository.deleteByUser(
+            user
+        );
+
         //ユーザー削除処理
-        userRepository.deleteById(id);
+        userRepository.deleteById(
+            id
+        );
 
         return "redirect:/admin";
     }
@@ -189,7 +403,10 @@ public class AdminController {
     ) {
 
         //ユーザー名空白チェック
-        if (username == null || username.isBlank()) {
+        if (
+            username == null
+            || username.isBlank()
+        ) {
 
             model.addAttribute(
                 "usernameError",
@@ -199,7 +416,8 @@ public class AdminController {
             return "admin/adminRegister";
         }
 
-        username = username.trim();
+        username =
+            username.trim();
 
         model.addAttribute(
             "enteredUsername",
@@ -207,7 +425,11 @@ public class AdminController {
         );
 
         //ユーザー名重複チェック
-        if (userRepository.findByUsername(username).isPresent()) {
+        if (
+            userRepository
+                .findByUsername(username)
+                .isPresent()
+        ) {
 
             model.addAttribute(
                 "usernameDuplicateError",
@@ -229,7 +451,11 @@ public class AdminController {
         }
 
         //パスワード英字チェック
-        if (!password.matches(".*[A-Za-z].*")) {
+        if (
+            !password.matches(
+                ".*[A-Za-z].*"
+            )
+        ) {
 
             model.addAttribute(
                 "passwordLetterError",
@@ -240,7 +466,11 @@ public class AdminController {
         }
 
         //パスワード数字チェック
-        if (!password.matches(".*[0-9].*")) {
+        if (
+            !password.matches(
+                ".*[0-9].*"
+            )
+        ) {
 
             model.addAttribute(
                 "passwordNumberError",
@@ -251,7 +481,11 @@ public class AdminController {
         }
 
         //パスワード一致チェック
-        if (!password.equals(confirmPassword)) {
+        if (
+            !password.equals(
+                confirmPassword
+            )
+        ) {
 
             model.addAttribute(
                 "passwordError",
@@ -262,13 +496,18 @@ public class AdminController {
         }
 
         //管理者ユーザー登録処理
-        User user = new User(
-            username,
-            passwordEncoder.encode(password),
-            "ADMIN"
-        );
+        User user =
+            new User(
+                username,
+                passwordEncoder.encode(
+                    password
+                ),
+                "ADMIN"
+            );
 
-        userRepository.save(user);
+        userRepository.save(
+            user
+        );
 
         //管理者向けお知らせ登録処理
         AdminNotification notification =
@@ -277,7 +516,9 @@ public class AdminController {
                 + "さんが管理者として登録されました。"
             );
 
-        adminNotificationRepository.save(notification);
+        adminNotificationRepository.save(
+            notification
+        );
 
         return "redirect:/admin";
     }

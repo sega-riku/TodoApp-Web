@@ -20,13 +20,13 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String title;
     private LocalDate deadline;
     private LocalTime time;
     private DateType dateType;
     private boolean completed;
     private String description;
+    private LocalDateTime completedAt;
 
     //タスク所有ユーザー
     @ManyToOne
@@ -45,7 +45,7 @@ public class Task {
         String description
     ) {
         this.title = title; //タスク名設定
-        this.deadline = deadline; //締切呼び出し
+        this.deadline = deadline; //予定・締切日設定
         this.time = time;
         this.dateType = dateType;
         this.completed = false; //完了ステータスを「未完了」と設定
@@ -93,12 +93,28 @@ public class Task {
         return this.completed;
     }
 
+    //締切期限切れ判定
     public boolean isExpired() {
-        LocalDateTime taskDateTime =
-            LocalDateTime.of(this.deadline, time);
 
-        return this.dateType == DateType.DEADLINE
-            && taskDateTime.isBefore(LocalDateTime.now());
+        //締切以外は期限切れにしない
+        if (this.dateType != DateType.DEADLINE) {
+            return false;
+        }
+
+        //時間未設定の場合は日付のみで判定
+        if (this.time == null) {
+            return this.deadline.isBefore(LocalDate.now());
+        }
+
+        LocalDateTime taskDateTime =
+            LocalDateTime.of(
+                this.deadline,
+                this.time
+            );
+
+        return taskDateTime.isBefore(
+            LocalDateTime.now()
+        );
     }
 
     public String getDescription() {
@@ -107,6 +123,10 @@ public class Task {
 
     public User getUser() {
         return this.user;
+    }
+
+    public LocalDateTime getCompletedAt(){
+        return this.completedAt;
     }
 
     //setter
@@ -128,10 +148,12 @@ public class Task {
 
     public void complete() { //ステータスを完了にする
         this.completed = true;
+        this.completedAt = LocalDateTime.now();
     }
 
     public void incomplete() { //ステータスを未完了に戻す
         this.completed = false;
+        this.completedAt = null;
     }
 
     public void setDescription(String description) {
@@ -140,5 +162,9 @@ public class Task {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public void setcompletedAt(LocalDateTime completedAt){
+        this.completedAt = completedAt;
     }
 }

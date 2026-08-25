@@ -12,6 +12,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    private final LoginSuccessHandler loginSuccessHandler;
+
+    public SecurityConfig(
+        LoginSuccessHandler loginSuccessHandler
+    ) {
+        this.loginSuccessHandler = loginSuccessHandler;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http
@@ -44,7 +52,9 @@ public class SecurityConfig {
             //ログイン設定
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true)
+                .successHandler(
+                    loginSuccessHandler
+                )
                 .permitAll()
             )
 

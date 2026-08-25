@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <title>お問い合わせ履歴</title>
+</head>
+
+<body>
+
+    <div class="container py-4">
+
+        <!--ヘッダー-->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h1 class="mb-1">
+                    お問い合わせ履歴
+                </h1>
+
+                <div class="text-secondary">
+                    過去に送信したお問い合わせを確認できます。
+                </div>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+
+                <span>
+                    <span th:text="${username}">
+                        ユーザー名
+                    </span>
+                    さん
+                </span>
+
+                <a
+                    th:href="@{/}"
+                    class="btn btn-outline-secondary">
+                    Todo画面へ戻る
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!--お問い合わせ履歴-->
+        <div class="card">
+
+            <div class="card-body">
+
+                <!--お問い合わせがない場合-->
+                <p
+                    th:if="${contacts.isEmpty()}"
+                    class="text-secondary mb-0">
+                    お問い合わせ履歴はありません。
+                </p>
+
+
+                <!--お問い合わせがある場合-->
+                <div
+                    class="table-responsive"
+                    th:if="${!contacts.isEmpty()}">
+
+                    <table class="table align-middle mb-0">
+
+                        <thead>
+
+                            <tr>
+                                <th>区分</th>
+                                <th>お問い合わせ日</th>
+                                <th>ステータス</th>
+                                <th>返信</th>
+                                <th>詳細</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr th:each="contact : ${contacts}">
+
+                                <!--区分-->
+                                <td
+                                    th:text="${contact.contactType.name() == 'QUESTION'
+                                        ? '質問'
+                                        : '意見'}">
+                                    質問
+                                </td>
+
+
+                                <!--お問い合わせ日-->
+                                <td
+                                    th:text="${#temporals.format(
+                                        contact.createdAt,
+                                        'yyyy/MM/dd HH:mm'
+                                    )}">
+                                    2026/08/25 10:00
+                                </td>
+
+
+                                <!--対応ステータス-->
+                                <td>
+
+                                    <span
+                                        class="badge rounded-pill"
+                                        th:classappend="${contact.status.name() == 'UNHANDLED'
+                                            ? ' text-bg-danger'
+                                            : contact.status.name() == 'IN_PROGRESS'
+                                                ? ' text-bg-warning'
+                                                : ' text-bg-success'}"
+                                        th:text="${contact.status.name() == 'UNHANDLED'
+                                            ? '未対応'
+                                            : contact.status.name() == 'IN_PROGRESS'
+                                                ? '対応中'
+                                                : '対応済み'}">
+                                        未対応
+                                    </span>
+
+                                </td>
+
+
+                                <!--返信状態-->
+                                <td th:id="'replyStatus' + ${contact.id}">
+
+                                    <!--返信なし-->
+                                    <span
+                                        th:if="${contact.reply == null}"
+                                        class="text-secondary">
+                                        ―
+                                    </span>
+
+
+                                    <!--未確認返信あり-->
+                                    <span
+                                        th:if="${contact.reply != null
+                                            and !contact.replyRead}"
+                                        class="badge text-bg-danger">
+                                        NEW
+                                    </span>
+
+
+                                    <!--確認済み返信-->
+                                    <span
+                                        th:if="${contact.reply != null
+                                            and contact.replyRead}"
+                                        class="text-secondary">
+                                        確認済み
+                                    </span>
+
+                                </td>
+
+
+                                <!--詳細-->
+                                <td>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#contactHistoryModal' + ${contact.id}"
+                                        th:data-contact-id="${contact.id}"
+                                        th:data-has-reply="${contact.reply != null}"
+                                        th:data-reply-read="${contact.replyRead}"
+                                        onclick="readReply(this)">
+                                        詳細
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--お問い合わせ詳細モーダル-->
+    <div
+        th:each="contact : ${contacts}"
+        class="modal fade"
+        th:id="'contactHistoryModal' + ${contact.id}"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        お問い合わせ詳細
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="閉じる">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <!--区分-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            区分
+                        </div>
+
+                        <div
+                            th:text="${contact.contactType.name() == 'QUESTION'
+                                ? '質問'
+                                : '意見'}">
+                            質問
+                        </div>
+
+                    </div>
+
+
+                    <!--お問い合わせ日時-->
+                    <div class="mb-3">
+
+                        <div class="text-secondary small">
+                            お問い合わせ日時
+                        </div>
+
+                        <div
+                            th:text="${#temporals.format(
+                                contact.createdAt,
+                                'yyyy/MM/dd HH:mm'
+                            )}">
+                            2026/08/25 10:00
+                        </div>
+
+                    </div>
+
+
+                    <!--対応ステータス-->
+                    <div class="mb-4">
+
+                        <div class="text-secondary small mb-1">
+                            対応ステータス
+                        </div>
+
+                        <span
+                            class="badge rounded-pill"
+                            th:classappend="${contact.status.name() == 'UNHANDLED'
+                                ? ' text-bg-danger'
+                                : contact.status.name() == 'IN_PROGRESS'
+                                    ? ' text-bg-warning'
+                                    : ' text-bg-success'}"
+                            th:text="${contact.status.name() == 'UNHANDLED'
+                                ? '未対応'
+                                : contact.status.name() == 'IN_PROGRESS'
+                                    ? '対応中'
+                                    : '対応済み'}">
+                            未対応
+                        </span>
+
+                    </div>
+
+
+                    <!--お問い合わせ内容-->
+                    <div class="mb-4">
+
+                        <div class="text-secondary small mb-2">
+                            お問い合わせ内容
+                        </div>
+
+                        <div
+                            class="border rounded p-3 bg-light"
+                            style="white-space: pre-wrap;"
+                            th:text="${contact.content}">
+                            お問い合わせ内容がここに表示されます。
+                        </div>
+
+                    </div>
+
+
+                    <hr class="my-4">
+
+
+                    <!--管理者からの返信-->
+                    <div>
+
+                        <h6 class="fw-bold mb-3">
+                            管理者からの返信
+                        </h6>
+
+
+                        <!--まだ返信がない場合-->
+                        <div
+                            th:if="${contact.reply == null}"
+                            class="border rounded p-3 bg-light text-secondary">
+
+                            まだ管理者からの返信はありません。
+
+                        </div>
+
+
+                        <!--返信がある場合-->
+                        <div th:if="${contact.reply != null}">
+
+                            <!--返信内容-->
+                            <div
+                                class="border rounded p-3 bg-light mb-3"
+                                style="white-space: pre-wrap;"
+                                th:text="${contact.reply}">
+                                管理者からの返信内容がここに表示されます。
+                            </div>
+
+
+                            <!--返信日時-->
+                            <div class="small text-secondary">
+
+                                返信日時：
+
+                                <span
+                                    th:text="${contact.repliedAt != null
+                                        ? #temporals.format(
+                                            contact.repliedAt,
+                                            'yyyy/MM/dd HH:mm'
+                                        )
+                                        : '-'}">
+                                    2026/08/25 11:00
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        閉じる
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!--Bootstrap JavaScript-->
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+
+    <!--お問い合わせ返信既読処理-->
+    <script th:inline="javascript">
+
+        function readReply(button) {
+
+            const contactId =
+                button.dataset.contactId;
+
+            const hasReply =
+                button.dataset.hasReply === "true";
+
+            const replyRead =
+                button.dataset.replyRead === "true";
+
+            //返信がない・既に確認済みの場合は処理しない
+            if (!hasReply || replyRead) {
+                return;
+            }
+
+            const csrfToken =
+                /*[[${_csrf.token}]]*/ "";
+
+            const csrfHeader =
+                /*[[${_csrf.headerName}]]*/ "";
+
+            fetch(
+                "/contact/history/read/" + contactId,
+                {
+                    method: "POST",
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                }
+            )
+            .then(response => {
+
+                //既読処理成功時
+                if (response.ok) {
+
+                    //返信状態表示変更処理
+                    const replyStatus =
+                        document.getElementById(
+                            "replyStatus" + contactId
+                        );
+
+                    if (replyStatus) {
+
+                        replyStatus.innerHTML =
+                            '<span class="text-secondary">確認済み</span>';
+                    }
+
+                    //再クリック時の既読処理防止
+                    button.dataset.replyRead =
+                        "true";
+                }
+            });
+        }
+
+    </script>
+
+</body>
+
+</html>
