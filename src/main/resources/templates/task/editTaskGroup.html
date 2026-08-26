@@ -9,12 +9,20 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <style>
+        @media(max-width: 991.98px){
+            .edit-page{
+                padding-top: 8rem !important;
+            }
+        }
+    </style>
+
     <title>タスク全体編集</title>
 </head>
 
 <body>
 
-    <div class="container py-5">
+    <div class="container py-5 edit-page">
 
         <div class="row justify-content-center">
 
@@ -29,8 +37,8 @@
                         </h2>
 
                         <p class="text-secondary mb-4">
-                            このタスクに登録されている
-                            すべての時間・詳細に共通する情報を変更します。
+                            このタスク全体に共通する情報を変更します。
+                            
                         </p>
 
                         <form
@@ -57,7 +65,7 @@
                             <div class="row g-3 mb-4">
 
                                 <!--予定・締切区分-->
-                                <div class="col-4">
+                                <div class="col-6 col-md-4">
 
                                     <label class="form-label">
                                         予定・締切区分
@@ -87,7 +95,7 @@
                                 </div>
 
                                 <!--日付-->
-                                <div class="col-8">
+                                <div class="col-7 col-md-8">
 
                                     <label class="form-label">
                                         日付

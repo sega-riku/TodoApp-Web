@@ -10,19 +10,49 @@
         rel="stylesheet">
 
     <title>Todoアプリメイン画面</title>
+    <style>
+        @media (max-width: 991.98px) {
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .task-item-row{
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 0.75rem !important
+            }
+
+            .task-item-content{
+                width: 100%;
+            }
+
+            .task-item-action{
+                width: 100%;
+                flex-wrap: nowrap !important;
+                justify-content: flex-end !important;
+            }
+
+            .task-item-action .btn{
+                white-space: nowrap;
+            }
+        }
+    </style>
+
 </head>
 
 <body>
 
     <div class="container py-4">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
 
-            <h1 class="mb-0">
+            <h1 class="mb-0 text-nowrap">
                 Todo一覧
             </h1>
 
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3 header-actions">
 
                 <!--ユーザーメニュー-->
                 <div class="dropdown">
@@ -184,7 +214,7 @@
                     <div class="row g-2 align-items-end">
 
                         <!--並び順-->
-                        <div class="col-4">
+                        <div class="col-6 col-lg-4">
 
                             <label class="form-label">
                                 並び順
@@ -197,7 +227,7 @@
                         </div>
 
                         <!--表示-->
-                        <div class="col-5">
+                        <div class="col-6 col-lg-5">
 
                             <label class="form-label">
                                 表示
@@ -231,7 +261,7 @@
                         </div>
 
                         <!--タスク追加-->
-                        <div class="col-3">
+                        <div class="col-12 col-lg-3 mt-3 mt-lg-0">
 
                             <a
                                 th:if="${!allTasks.isEmpty()}"
@@ -475,10 +505,10 @@
                                 th:each="task : ${group.tasks}"
                                 class="border rounded p-3 mb-2">
 
-                                <div class="d-flex justify-content-between align-items-center gap-3">
+                                <div class="d-flex justify-content-between align-items-center gap-3 task-item-row">
 
                                     <!--時間・詳細-->
-                                    <div class="flex-grow-1">
+                                    <div class="flex-grow-1 task-item-content">
 
                                         <span
                                             th:classappend="${task.completed
@@ -511,7 +541,7 @@
                                     </div>
 
                                     <!--個別操作-->
-                                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-end task-item-actions">
 
                                         <!--完了-->
                                         <a
@@ -757,6 +787,13 @@
                                                 : '未完了'}">
                                     </span>
 
+                                    <span
+                                        th:if="${group.tasks.get(0).expired
+                                                 && groupStatuses[group.tasks.get(0).id] != 'COMPLETED'}"
+                                        class="badge rounded-pill text-bg-danger">
+                                        期限切れ
+                                    </span>
+
                                 </div>
 
                                 <!--グループ操作-->
@@ -861,7 +898,7 @@
                                 class="border rounded p-3 mb-2"
                                 th:classappend="${
                                     task.expired
-                                        ? ' bg-danger text-white'
+                                        ? ' bg-danger-subtle border-danger'
                                         : task.deadline.isEqual(today)
                                             ? ' bg-danger-subtle text-danger-emphasis'
                                             : !task.deadline.isAfter(threeDaysLater)
@@ -869,10 +906,10 @@
                                                 : ''
                                 }">
 
-                                <div class="d-flex justify-content-between align-items-center gap-3">
+                                <div class="d-flex justify-content-between align-items-center gap-3 task-item-row">
 
                                     <!--時間・詳細-->
-                                    <div class="flex-grow-1">
+                                    <div class="flex-grow-1 task-item-content">
 
                                         <!--緊急度アイコン-->
                                         <span
@@ -915,7 +952,7 @@
                                     </div>
 
                                     <!--個別操作-->
-                                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-end task-item-actions">
 
                                         <!--完了-->
                                         <a

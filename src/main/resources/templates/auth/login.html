@@ -10,11 +10,20 @@
         rel="stylesheet">
 
     <title>ログイン</title>
+
+    <style>
+        @media (max-width: 991.98px) {
+
+            .login-page {
+                padding-top: 11rem !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <div class="container py-5">
+    <div class="container py-5 login-page">
 
         <!-- 横幅を制限して中央配置 -->
         <div
@@ -36,7 +45,7 @@
                         ユーザー名またはパスワードが正しくありません
                     </div>
 
-                    <div 
+                    <div
                         th:if="${param.registered}"
                         class="alert alert-success text-center">
                         ユーザー登録が完了しました
@@ -47,7 +56,7 @@
                         class="alert alert-success text-center">
                         ログアウトしました
                     </div>
-                    
+
                     <form
                         th:action="@{/login}"
                         method="post">
@@ -79,12 +88,22 @@
                                 パスワード
                             </label>
 
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="form-control"
-                                required>
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    class="form-control"
+                                    required>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword('password',this)">
+                                    表示
+                                </button>
+                            </div>
 
                         </div>
 
@@ -122,6 +141,25 @@
         </div>
 
     </div>
+    <!--パスワード表示ボタン-->
+    <script>
+        function togglePassword(inputId, button) {
+
+            const input =
+                document.getElementById(inputId);
+
+            if (input.type === "password") {
+
+                input.type = "text";
+                button.textContent = "隠す";
+
+            } else {
+
+                input.type = "password";
+                button.textContent = "表示";
+            }
+        }
+    </script>
 
 </body>
 

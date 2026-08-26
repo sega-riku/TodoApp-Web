@@ -9,6 +9,53 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <style>
+        /*お問い合わせ履歴スクロール*/
+        .contact-history-scroll {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /*テーブルヘッダー固定*/
+        .contact-history-scroll thead th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1;
+        }
+
+        /*スマホ表示*/
+        @media (max-width: 991.98px) {
+
+            /*ヘッダー縦並び*/
+            .contact-history-header {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 1rem;
+            }
+
+            /*ユーザー名・戻るボタン*/
+            .contact-history-user {
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            /*お問い合わせ履歴テーブル*/
+            .contact-history-table{
+                min-width: 650px;
+            }
+            .contact-history-table th,
+            .contact-history-table td{
+                white-space: nowrap;
+            }
+
+            /*スマホ時の履歴表示範囲*/
+            .contact-history-scroll {
+                max-height: 65vh;
+            }
+        }
+    </style>
+
     <title>お問い合わせ履歴</title>
 </head>
 
@@ -17,7 +64,7 @@
     <div class="container py-4">
 
         <!--ヘッダー-->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="contact-history-header d-flex justify-content-between align-items-center mb-4">
 
             <div>
 
@@ -31,7 +78,7 @@
 
             </div>
 
-            <div class="d-flex align-items-center gap-3">
+            <div class="contact-history-user d-flex align-items-center gap-3">
 
                 <span>
                     <span th:text="${username}">
@@ -66,10 +113,10 @@
 
                 <!--お問い合わせがある場合-->
                 <div
-                    class="table-responsive"
+                    class="table-responsive contact-history-scroll"
                     th:if="${!contacts.isEmpty()}">
 
-                    <table class="table align-middle mb-0">
+                    <table class="table align-middle mb-0 contact-history-table">
 
                         <thead>
 

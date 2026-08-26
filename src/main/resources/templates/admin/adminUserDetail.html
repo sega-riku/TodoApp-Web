@@ -9,6 +9,24 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <style>
+        @media(max-width: 991.98px){
+            .user-detail-actions{
+                gap: 0.5rem;
+            }
+
+            .user-detail-actions .btn{
+                font-size: 1rem;
+                padding: 0.5rem 0.55rem;
+                white-space: nowrap;
+            }
+
+            .user-detail-action-group{
+                gap: 0.5rem;
+            }
+        }
+    </style>
+
     <title>ユーザー詳細</title>
 </head>
 
@@ -123,7 +141,7 @@
 
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center user-detail-actions">
 
                         <a
                             th:href="@{/admin}"
@@ -131,7 +149,7 @@
                             一覧へ戻る
                         </a>
 
-                        <div class="d-flex gap-2">
+                        <div class="d-flex user-detail-action-group">
 
                             <button
                                 type="button"
