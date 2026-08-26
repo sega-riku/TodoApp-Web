@@ -983,6 +983,12 @@ public class HomeController {
             today.plusDays(3)
         );
 
+        //ログインユーザー情報
+        model.addAttribute(
+            "user",
+            loginUser
+        );
+
         // ログインユーザー名表示処理
         model.addAttribute(
             "username",

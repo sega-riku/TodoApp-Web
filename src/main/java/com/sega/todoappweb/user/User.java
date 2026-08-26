@@ -16,6 +16,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
+    private String email;
     private String password;
     private String role;
     private LocalDateTime createdAt;
@@ -25,8 +26,9 @@ public class User {
     public User() {
     }
 
-    public User(String username, String password, String role) {
+    public User(String username,String email, String password, String role) {
         this.username = username;
+        this.email = email;
         this.password = password;
         this.role = role;
         this.createdAt = LocalDateTime.now();
@@ -40,6 +42,10 @@ public class User {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getEmail(){
+        return email;
     }
 
     public String getPassword() {
@@ -61,6 +67,10 @@ public class User {
     //setter
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public void setEmail(String email){
+        this.email = email;
     }
 
     public void setPassword(String password) {

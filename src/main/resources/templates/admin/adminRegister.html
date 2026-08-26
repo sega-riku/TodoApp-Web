@@ -49,6 +49,27 @@
                         th:text="${usernameDuplicateError}">
                     </div>
 
+                    <!--メールアドレス未入力エラー-->
+                    <div
+                        th:if="${emailError}"
+                        class="alert alert-danger text-center"
+                        th:text="${emailError}">
+                    </div>
+
+                    <!--メールアドレス形式エラー-->
+                    <div
+                        th:if="${emailFormatError}"
+                        class="alert alert-danger text-center"
+                        th:text="${emailFormatError}">
+                    </div>
+
+                    <!--メールアドレス重複エラー-->
+                    <div
+                        th:if="${emailDuplicateError}"
+                        class="alert alert-danger text-center"
+                        th:text="${emailDuplicateError}">
+                    </div>
+
                     <!--パスワード文字数エラー-->
                     <div
                         th:if="${passwordLengthError}"
@@ -97,6 +118,26 @@
                                 name="username"
                                 class="form-control"
                                 th:value="${enteredUsername}"
+                                required>
+
+                        </div>
+
+                        <!--メールアドレス-->
+                        <div class="mb-3">
+
+                            <label
+                                for="email"
+                                class="form-label">
+                                メールアドレス
+                            </label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-control"
+                                th:value="${enteredEmail}"
+                                placeholder="example@example.com"
                                 required>
 
                         </div>

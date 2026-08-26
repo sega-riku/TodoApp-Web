@@ -1,9 +1,7 @@
 package com.sega.todoappweb.user;
 
-import java.security.Principal;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -11,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.security.Principal;
 
 import com.sega.todoappweb.admin.AdminNotification;
 import com.sega.todoappweb.admin.AdminNotificationRepository;
@@ -42,6 +42,7 @@ public class UserController {
     @PostMapping("/user/update")
     public String updateUser(
         @RequestParam(required = false) String newUsername,
+        @RequestParam(required = false) String newEmail,
         @RequestParam(required = false) String currentPassword,
         @RequestParam(required = false) String newPassword,
         @RequestParam(required = false) String confirmPassword,
@@ -60,11 +61,22 @@ public class UserController {
             newUsername = newUsername.trim();
         }
 
+        //メールアドレス整形処理
+        if (newEmail != null) {
+            newEmail = newEmail.trim();
+        }
+
         //ユーザー名変更有無判定
         boolean usernameChanged =
             newUsername != null
             && !newUsername.isBlank()
             && !newUsername.equals(user.getUsername());
+
+        //メールアドレス変更有無判定
+        boolean emailChanged =
+            newEmail != null
+            && !newEmail.isBlank()
+            && !newEmail.equalsIgnoreCase(user.getEmail());
 
         //パスワード変更有無判定
         boolean passwordChanged =
@@ -72,17 +84,21 @@ public class UserController {
             && !newPassword.isBlank();
 
         //変更内容未入力チェック
-        if (!usernameChanged && !passwordChanged) {
+        if (
+            !usernameChanged
+            && !emailChanged
+            && !passwordChanged
+        ) {
 
             redirectAttributes.addFlashAttribute(
                 "userUpdateError",
                 "変更する内容を入力してください"
             );
 
-            //入力したユーザー名のみ保持
-            keepUsername(
+            keepUserInput(
                 redirectAttributes,
-                newUsername
+                newUsername,
+                newEmail
             );
 
             return "redirect:/";
@@ -92,17 +108,73 @@ public class UserController {
         if (usernameChanged) {
 
             //ユーザー名重複チェック
-            if (userRepository.findByUsername(newUsername).isPresent()) {
+            if (
+                userRepository
+                    .findByUsername(newUsername)
+                    .isPresent()
+            ) {
 
                 redirectAttributes.addFlashAttribute(
                     "userUpdateError",
                     "このユーザー名は既に使用されています"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
+                );
+
+                return "redirect:/";
+            }
+        }
+
+        //メールアドレス変更チェック
+        if (emailChanged) {
+
+            //メールアドレス形式チェック
+            if (
+                !newEmail.matches(
+                    "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+                )
+            ) {
+
+                redirectAttributes.addFlashAttribute(
+                    "userUpdateError",
+                    "正しい形式のメールアドレスを入力してください"
+                );
+
+                keepUserInput(
+                    redirectAttributes,
+                    newUsername,
+                    newEmail
+                );
+
+                return "redirect:/";
+            }
+
+            //メールアドレス重複チェック
+            User emailUser =
+                userRepository
+                    .findByEmail(newEmail)
+                    .orElse(null);
+
+            if (
+                emailUser != null
+                && !emailUser
+                    .getId()
+                    .equals(user.getId())
+            ) {
+
+                redirectAttributes.addFlashAttribute(
+                    "userUpdateError",
+                    "このメールアドレスは既に使用されています"
+                );
+
+                keepUserInput(
+                    redirectAttributes,
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
@@ -123,30 +195,32 @@ public class UserController {
                     "現在のパスワードを入力してください"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
             }
 
             //現在のパスワード確認
-            if (!passwordEncoder.matches(
-                currentPassword,
-                user.getPassword()
-            )) {
+            if (
+                !passwordEncoder.matches(
+                    currentPassword,
+                    user.getPassword()
+                )
+            ) {
 
                 redirectAttributes.addFlashAttribute(
                     "userUpdateError",
                     "現在のパスワードが正しくありません"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
@@ -160,44 +234,52 @@ public class UserController {
                     "新しいパスワードは8文字以上で入力してください"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
             }
 
             //パスワード英字チェック
-            if (!newPassword.matches(".*[A-Za-z].*")) {
+            if (
+                !newPassword.matches(
+                    ".*[A-Za-z].*"
+                )
+            ) {
 
                 redirectAttributes.addFlashAttribute(
                     "userUpdateError",
                     "新しいパスワードには英字を1文字以上含めてください"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
             }
 
             //パスワード数字チェック
-            if (!newPassword.matches(".*[0-9].*")) {
+            if (
+                !newPassword.matches(
+                    ".*[0-9].*"
+                )
+            ) {
 
                 redirectAttributes.addFlashAttribute(
                     "userUpdateError",
                     "新しいパスワードには数字を1文字以上含めてください"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
@@ -214,10 +296,10 @@ public class UserController {
                     "新しいパスワードが一致しません"
                 );
 
-                //入力したユーザー名のみ保持
-                keepUsername(
+                keepUserInput(
                     redirectAttributes,
-                    newUsername
+                    newUsername,
+                    newEmail
                 );
 
                 return "redirect:/";
@@ -226,19 +308,34 @@ public class UserController {
 
         //ユーザー名変更処理
         if (usernameChanged) {
-            user.setUsername(newUsername);
+
+            user.setUsername(
+                newUsername
+            );
+        }
+
+        //メールアドレス変更処理
+        if (emailChanged) {
+
+            user.setEmail(
+                newEmail
+            );
         }
 
         //パスワード変更処理
         if (passwordChanged) {
 
             user.setPassword(
-                passwordEncoder.encode(newPassword)
+                passwordEncoder.encode(
+                    newPassword
+                )
             );
         }
 
         //ユーザー情報保存処理
-        userRepository.save(user);
+        userRepository.save(
+            user
+        );
 
         //管理者向け履歴登録処理
         AdminNotification notification =
@@ -247,7 +344,9 @@ public class UserController {
                 + "さんがユーザー情報を変更しました。"
             );
 
-        adminNotificationRepository.save(notification);
+        adminNotificationRepository.save(
+            notification
+        );
 
         //ユーザー名変更後の認証情報更新処理
         if (usernameChanged) {
@@ -266,7 +365,9 @@ public class UserController {
 
             SecurityContextHolder
                 .getContext()
-                .setAuthentication(newAuthentication);
+                .setAuthentication(
+                    newAuthentication
+                );
         }
 
         //変更成功メッセージ
@@ -309,10 +410,12 @@ public class UserController {
         }
 
         //現在のパスワード確認
-        if (!passwordEncoder.matches(
-            deletePassword,
-            user.getPassword()
-        )) {
+        if (
+            !passwordEncoder.matches(
+                deletePassword,
+                user.getPassword()
+            )
+        ) {
 
             redirectAttributes.addFlashAttribute(
                 "accountDeleteError",
@@ -327,10 +430,14 @@ public class UserController {
             user.getUsername();
 
         //ユーザーに紐づくタスク一括削除処理
-        taskRepository.deleteByUser(user);
+        taskRepository.deleteByUser(
+            user
+        );
 
         //ユーザー削除処理
-        userRepository.delete(user);
+        userRepository.delete(
+            user
+        );
 
         //管理者向け履歴登録処理
         AdminNotification notification =
@@ -339,23 +446,29 @@ public class UserController {
                 + "さんがアカウントを削除しました。"
             );
 
-        adminNotificationRepository.save(notification);
+        adminNotificationRepository.save(
+            notification
+        );
 
         //ログイン情報削除処理
         SecurityContextHolder.clearContext();
 
         //セッション破棄処理
-        request.getSession().invalidate();
+        request
+            .getSession()
+            .invalidate();
 
         return "redirect:/login?accountDeleted";
     }
 
-    //エラー時ユーザー名保持処理
-    private void keepUsername(
+    //エラー時入力内容保持処理
+    private void keepUserInput(
         RedirectAttributes redirectAttributes,
-        String newUsername
+        String newUsername,
+        String newEmail
     ) {
 
+        //入力したユーザー名保持
         if (
             newUsername != null
             && !newUsername.isBlank()
@@ -364,6 +477,18 @@ public class UserController {
             redirectAttributes.addFlashAttribute(
                 "enteredNewUsername",
                 newUsername
+            );
+        }
+
+        //入力したメールアドレス保持
+        if (
+            newEmail != null
+            && !newEmail.isBlank()
+        ) {
+
+            redirectAttributes.addFlashAttribute(
+                "enteredNewEmail",
+                newEmail
             );
         }
     }

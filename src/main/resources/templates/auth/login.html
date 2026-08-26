@@ -52,6 +52,13 @@
                     </div>
 
                     <div
+                    th:if="${param.passwordReset}"
+                    class="alert alert-success text-center">
+                    パスワードを再設定しました。<br>
+                    新しいパスワードでログインしてください。
+                    </div>
+
+                    <div
                         th:if="${param.logout}"
                         class="alert alert-success text-center">
                         ログアウトしました
@@ -105,6 +112,13 @@
                                 </button>
                             </div>
 
+                        </div>
+
+                        <!--パスワード再設定-->
+                        <div class="text-end mb-4">
+                            <a th:href="@{/password/forgot}">
+                                パスワードを忘れた方はこちら
+                            </a>
                         </div>
 
                         <!-- ボタンエリア -->

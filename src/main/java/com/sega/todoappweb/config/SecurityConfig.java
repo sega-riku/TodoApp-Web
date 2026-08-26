@@ -37,7 +37,9 @@ public class SecurityConfig {
                 //未ログインでもアクセス可能
                 .requestMatchers(
                     "/login",
-                    "/register"
+                    "/register",
+                    "/password/forgot",
+                    "/password/reset"
                 ).permitAll()
 
                 //管理者のみアクセス可能

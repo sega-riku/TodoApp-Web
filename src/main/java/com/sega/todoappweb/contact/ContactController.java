@@ -16,6 +16,7 @@ import com.sega.todoappweb.admin.AdminNotificationRepository;
 import com.sega.todoappweb.admin.AdminNotificationType;
 import com.sega.todoappweb.user.User;
 import com.sega.todoappweb.user.UserRepository;
+import com.sega.todoappweb.mail.MailService;
 
 @Controller
 public class ContactController {
@@ -23,15 +24,18 @@ public class ContactController {
     private final ContactRepository contactRepository;
     private final UserRepository userRepository;
     private final AdminNotificationRepository adminNotificationRepository;
+    private final MailService mailService;
 
     public ContactController(
         ContactRepository contactRepository,
         UserRepository userRepository,
-        AdminNotificationRepository adminNotificationRepository
+        AdminNotificationRepository adminNotificationRepository,
+        MailService mailService
     ) {
         this.contactRepository = contactRepository;
         this.userRepository = userRepository;
         this.adminNotificationRepository = adminNotificationRepository;
+        this.mailService = mailService;
     }
 
     //お問い合わせ送信処理
@@ -90,6 +94,13 @@ public class ContactController {
         adminNotificationRepository.save(
             notification
         );
+
+        //管理者へお問い合わせ通知メール送信処理
+        mailService.sendContactNotificationMail(
+            loginUser.getUsername(), 
+            contactType.getDisplayName()
+        );
+        
 
         //お問い合わせ送信完了メッセージ設定処理
         redirectAttributes.addFlashAttribute(

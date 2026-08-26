@@ -21,6 +21,7 @@ import com.sega.todoappweb.task.TaskRepository;
 import com.sega.todoappweb.contact.Contact;
 import com.sega.todoappweb.contact.ContactRepository;
 import com.sega.todoappweb.contact.ContactStatus;
+import com.sega.todoappweb.mail.MailService;
 
 @Controller
 public class AdminController {
@@ -30,19 +31,22 @@ public class AdminController {
     private final PasswordEncoder passwordEncoder;
     private final TaskRepository taskRepository;
     private final ContactRepository contactRepository;
+    private final MailService mailService;
 
     public AdminController(
         UserRepository userRepository,
         AdminNotificationRepository adminNotificationRepository,
         PasswordEncoder passwordEncoder,
         TaskRepository taskRepository,
-        ContactRepository contactRepository
+        ContactRepository contactRepository,
+        MailService mailService
     ) {
         this.userRepository = userRepository;
         this.adminNotificationRepository = adminNotificationRepository;
         this.passwordEncoder = passwordEncoder;
         this.taskRepository = taskRepository;
         this.contactRepository = contactRepository;
+        this.mailService = mailService;
     }
 
     //管理者画面
@@ -55,8 +59,8 @@ public class AdminController {
 
         List<User> users = userRepository.findAll();
 
-        model.addAttribute("users",users);
-        model.addAttribute("username",principal.getName());
+        model.addAttribute("users", users);
+        model.addAttribute("username", principal.getName());
 
         long totalUsers = users.size();
 
@@ -82,9 +86,9 @@ public class AdminController {
                 )
                 .count();
 
-        model.addAttribute("totalUsers",totalUsers);
-        model.addAttribute("adminCount",adminCount);
-        model.addAttribute("userCount",userCount);
+        model.addAttribute("totalUsers", totalUsers);
+        model.addAttribute("adminCount", adminCount);
+        model.addAttribute("userCount", userCount);
 
         //管理者向けお知らせ取得処理
         List<AdminNotification> notifications =
@@ -98,10 +102,16 @@ public class AdminController {
 
         //最新5件まで表示
         if (notifications.size() > 5) {
-            notifications = new ArrayList<>(notifications.subList(0,5));
+            notifications =
+                new ArrayList<>(
+                    notifications.subList(0, 5)
+                );
         }
 
-        model.addAttribute("notifications",notifications);
+        model.addAttribute(
+            "notifications",
+            notifications
+        );
 
         //未対応・対応中お問い合わせ取得処理
         List<Contact> contacts =
@@ -116,7 +126,10 @@ public class AdminController {
             ).reversed()
         );
 
-        model.addAttribute("contacts",contacts);
+        model.addAttribute(
+            "contacts",
+            contacts
+        );
 
         //新しいお問い合わせ通知判定
         model.addAttribute(
@@ -238,11 +251,11 @@ public class AdminController {
         @RequestParam ContactStatus status
     ) {
 
-    //お問い合わせ取得処理
-    Contact contact =
-        contactRepository
-            .findById(id)
-            .orElse(null);
+        //お問い合わせ取得処理
+        Contact contact =
+            contactRepository
+                .findById(id)
+                .orElse(null);
 
         //存在しないお問い合わせの場合は履歴画面へ戻す
         if (contact == null) {
@@ -267,44 +280,96 @@ public class AdminController {
         return "redirect:/admin/contact/history";
     }
 
+    //お問い合わせ返信処理
     @PostMapping("/admin/contact/reply/{id}")
     public String replyContact(
         @PathVariable Long id,
         @RequestParam String reply,
         Principal principal,
         RedirectAttributes redirectAttributes
-    ){
+    ) {
+
         //お問い合わせ取得処理
-        Contact contact = contactRepository.findById(id).orElse(null);
+        Contact contact =
+            contactRepository
+                .findById(id)
+                .orElse(null);
 
         //存在しないお問い合わせの場合は管理画面へ戻す
-        if(contact == null){
+        if (contact == null) {
             return "redirect:/admin";
         }
+
         //返信内容空白チェック
-        if(reply == null || reply.isBlank()){
-            redirectAttributes.addFlashAttribute("contactReplyError","返信内容を入力してください");
-            redirectAttributes.addFlashAttribute("contactReplyErrorId",id);
+        if (
+            reply == null
+            || reply.isBlank()
+        ) {
+
+            redirectAttributes.addFlashAttribute(
+                "contactReplyError",
+                "返信内容を入力してください"
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "contactReplyErrorId",
+                id
+            );
+
             return "redirect:/admin";
         }
 
         //返信済みチェック
-        if(contact.getReply() != null){
-            redirectAttributes.addFlashAttribute("contactReplyError","このお問い合わせは既に返信しています");
-            redirectAttributes.addFlashAttribute("contactReplyErrorId",id);
+        if (contact.getReply() != null) {
+
+            redirectAttributes.addFlashAttribute(
+                "contactReplyError",
+                "このお問い合わせは既に返信しています"
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "contactReplyErrorId",
+                id
+            );
+
             return "redirect:/admin";
         }
 
         //ユーザーへの返信設定処理
-        contact.reply(reply.trim(), principal.getName());
+        contact.reply(
+            reply.trim(),
+            principal.getName()
+        );
 
         //お問い合わせ保存処理
-        contactRepository.save(contact);
-        redirectAttributes.addFlashAttribute("contactReplySuccess","ユーザーへ返信しました。");
+        contactRepository.save(
+            contact
+        );
+
+        //お問い合わせをしたユーザー取得処理
+        User contactUser =
+            userRepository
+                .findByUsername(
+                    contact.getUsername()
+                )
+                .orElse(null);
+
+        //ユーザーが存在する場合のみ返信通知メール送信
+        if (contactUser != null) {
+
+            mailService.sendContactReplyNotificationMail(
+                contactUser.getEmail(),
+                contactUser.getUsername()
+            );
+        }
+
+        redirectAttributes.addFlashAttribute(
+            "contactReplySuccess",
+            "ユーザーへ返信しました。"
+        );
 
         return "redirect:/admin";
     }
-    
 
     //ユーザー詳細画面処理
     @GetMapping("/admin/users/{id}")
@@ -397,6 +462,7 @@ public class AdminController {
     @PostMapping("/admin/register")
     public String adminRegister(
         @RequestParam String username,
+        @RequestParam String email,
         @RequestParam String password,
         @RequestParam String confirmPassword,
         Model model
@@ -419,9 +485,17 @@ public class AdminController {
         username =
             username.trim();
 
+        email =
+            email.trim();
+
         model.addAttribute(
             "enteredUsername",
             username
+        );
+
+        model.addAttribute(
+            "enteredEmail",
+            email
         );
 
         //ユーザー名重複チェック
@@ -499,6 +573,7 @@ public class AdminController {
         User user =
             new User(
                 username,
+                email,
                 passwordEncoder.encode(
                     password
                 ),

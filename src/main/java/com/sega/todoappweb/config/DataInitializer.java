@@ -24,10 +24,10 @@ public class DataInitializer {
 
                 User user = new User(
                     "user1",
+                    "user1@example.com",
                     passwordEncoder.encode("password"),
                     "USER"
                 );
-            
 
                 userRepository.save(user);
             }

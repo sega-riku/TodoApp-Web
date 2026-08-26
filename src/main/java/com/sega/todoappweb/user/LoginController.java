@@ -45,11 +45,13 @@ public class LoginController {
     @PostMapping("/register")
     public String register(
         @RequestParam String username,
+        @RequestParam String email,
         @RequestParam String password,
         @RequestParam String confirmPassword,
         Model model
     ) {
 
+        // ユーザー名空白チェック
         if (username == null || username.isBlank()) {
 
             model.addAttribute(
@@ -67,6 +69,7 @@ public class LoginController {
             username
         );
 
+        // ユーザー名重複チェック
         if (userRepository.findByUsername(username).isPresent()) {
 
             model.addAttribute(
@@ -77,6 +80,51 @@ public class LoginController {
             return "auth/register";
         }
 
+        // メールアドレス空白チェック
+        if (email == null || email.isBlank()) {
+
+            model.addAttribute(
+                "emailError",
+                "メールアドレスを入力してください"
+            );
+
+            return "auth/register";
+        }
+
+        email = email.trim();
+
+        model.addAttribute(
+            "enteredEmail",
+            email
+        );
+
+        // メールアドレス形式チェック
+        if (
+            !email.matches(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+            )
+        ) {
+
+            model.addAttribute(
+                "emailFormatError",
+                "正しい形式のメールアドレスを入力してください"
+            );
+
+            return "auth/register";
+        }
+
+        // メールアドレス重複チェック
+        if (userRepository.findByEmail(email).isPresent()) {
+
+            model.addAttribute(
+                "emailDuplicateError",
+                "このメールアドレスは既に使用されています"
+            );
+
+            return "auth/register";
+        }
+
+        // パスワード文字数チェック
         if (password.length() < 8) {
 
             model.addAttribute(
@@ -87,6 +135,7 @@ public class LoginController {
             return "auth/register";
         }
 
+        // パスワード英字チェック
         if (!password.matches(".*[A-Za-z].*")) {
 
             model.addAttribute(
@@ -97,6 +146,7 @@ public class LoginController {
             return "auth/register";
         }
 
+        // パスワード数字チェック
         if (!password.matches(".*[0-9].*")) {
 
             model.addAttribute(
@@ -107,6 +157,7 @@ public class LoginController {
             return "auth/register";
         }
 
+        // パスワード一致チェック
         if (!password.equals(confirmPassword)) {
 
             model.addAttribute(
@@ -117,15 +168,22 @@ public class LoginController {
             return "auth/register";
         }
 
+        // ユーザー登録処理
         User user = new User(
             username,
+            email,
             passwordEncoder.encode(password),
             "USER"
         );
 
         userRepository.save(user);
 
-        AdminNotification notification = new AdminNotification(user.getUsername() + "さんが新規登録しました。");
+        // 管理者向けお知らせ登録処理
+        AdminNotification notification =
+            new AdminNotification(
+                user.getUsername()
+                + "さんが新規登録しました。"
+            );
 
         adminNotificationRepository.save(notification);
 
