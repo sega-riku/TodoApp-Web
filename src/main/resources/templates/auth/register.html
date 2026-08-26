@@ -41,54 +41,63 @@
 
                 <div class="card-body p-4">
 
+                    <!--ユーザー名未入力エラー-->
                     <div
                         th:if="${usernameError}"
                         class="alert alert-danger text-center"
                         th:text="${usernameError}">
                     </div>
 
+                    <!--ユーザー名重複エラー-->
                     <div
                         th:if="${usernameDuplicateError}"
                         class="alert alert-danger text-center"
                         th:text="${usernameDuplicateError}">
                     </div>
 
+                    <!--メールアドレス未入力エラー-->
                     <div
                         th:if="${emailError}"
                         class="alert alert-danger text-center"
                         th:text="${emailError}">
                     </div>
 
+                    <!--メールアドレス形式エラー-->
                     <div
                         th:if="${emailFormatError}"
                         class="alert alert-danger text-center"
                         th:text="${emailFormatError}">
                     </div>
 
+                    <!--メールアドレス重複エラー-->
                     <div
                         th:if="${emailDuplicateError}"
-                        class="alert alertdanger text-center"
-                        th:text="${emailDeplicateError}">
+                        class="alert alert-danger text-center"
+                        th:text="${emailDuplicateError}">
                     </div>
 
+                    <!--パスワード文字数エラー-->
                     <div
                         th:if="${passwordLengthError}"
                         class="alert alert-danger text-center"
                         th:text="${passwordLengthError}">
                     </div>
 
+                    <!--パスワード英字エラー-->
                     <div
                         th:if="${passwordLetterError}"
                         class="alert alert-danger text-center"
                         th:text="${passwordLetterError}">
                     </div>
 
+                    <!--パスワード数字エラー-->
                     <div
                         th:if="${passwordNumberError}"
                         class="alert alert-danger text-center"
                         th:text="${passwordNumberError}">
                     </div>
 
+                    <!--パスワード不一致エラー-->
                     <div
                         th:if="${passwordError}"
                         class="alert alert-danger text-center"
