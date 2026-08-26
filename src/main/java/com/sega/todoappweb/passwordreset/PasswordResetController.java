@@ -3,6 +3,7 @@ package com.sega.todoappweb.passwordreset;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +22,9 @@ public class PasswordResetController {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final MailService mailService;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public PasswordResetController(
         UserRepository userRepository,
@@ -96,14 +100,32 @@ public class PasswordResetController {
 
             //再設定URL作成
             String resetUrl =
-                "http://localhost:8080/password/reset?token="
+                baseUrl
+                + "/password/reset?token="
                 + token;
 
             //メール送信
-            mailService.sendPasswordResetMail(
-                user.getEmail(),
-                resetUrl
-            );
+            try {
+
+                mailService.sendPasswordResetMail(
+                    user.getEmail(),
+                    resetUrl
+                );
+
+            } catch (RuntimeException e) {
+
+                System.err.println(
+                    "パスワード再設定メールの送信に失敗しました："
+                    + e.getMessage()
+                );
+
+                model.addAttribute(
+                    "mailError",
+                    "メールの送信に失敗しました。時間をおいて再度お試しください。"
+                );
+
+                return "auth/forgotPassword";
+            }
         }
 
         model.addAttribute(

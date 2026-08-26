@@ -96,11 +96,22 @@ public class ContactController {
         );
 
         //管理者へお問い合わせ通知メール送信処理
-        mailService.sendContactNotificationMail(
-            loginUser.getUsername(), 
-            contactType.getDisplayName()
-        );
-        
+        try {
+
+            mailService.sendContactNotificationMail(
+                loginUser.getUsername(),
+                contactType.getDisplayName()
+            );
+
+        } catch (RuntimeException e) {
+
+            //メール送信に失敗しても
+            //お問い合わせ処理自体は正常に完了させる
+            System.err.println(
+                "管理者へのお問い合わせ通知メール送信に失敗しました："
+                + e.getMessage()
+            );
+        }
 
         //お問い合わせ送信完了メッセージ設定処理
         redirectAttributes.addFlashAttribute(

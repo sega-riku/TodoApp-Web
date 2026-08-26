@@ -924,6 +924,39 @@
 
     </script>
 
+
+    <!--対応情報更新後のモーダル再表示処理-->
+    <script
+        th:if="${contactUpdatedId != null}"
+        th:inline="javascript">
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                const contactId =
+                    /*[[${contactUpdatedId}]]*/ 0;
+
+                const modalElement =
+                    document.getElementById(
+                        "contactDetailModal" + contactId
+                    );
+
+                //対象のお問い合わせモーダルが存在する場合
+                if (modalElement) {
+
+                    const contactModal =
+                        new bootstrap.Modal(
+                            modalElement
+                        );
+
+                    contactModal.show();
+                }
+            }
+        );
+
+    </script>
+
 </body>
 
 </html>

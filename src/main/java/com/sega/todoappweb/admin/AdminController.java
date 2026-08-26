@@ -241,6 +241,11 @@ public class AdminController {
             contact
         );
 
+        //対応済み以外の場合は同じモーダルを再表示
+        if(status != ContactStatus.COMPLETED){
+            redirectAttributes.addFlashAttribute("contactUpdatedId",id);
+        }
+
         return "redirect:/admin";
     }
 
@@ -354,8 +359,12 @@ public class AdminController {
                 )
                 .orElse(null);
 
-        //ユーザーが存在する場合のみ返信通知メール送信
-        if (contactUser != null) {
+        //ユーザーとメールアドレスが存在する場合のみ返信通知メール送信
+        if (
+            contactUser != null
+            && contactUser.getEmail() != null
+            && !contactUser.getEmail().isBlank()
+        ) {
 
             mailService.sendContactReplyNotificationMail(
                 contactUser.getEmail(),
