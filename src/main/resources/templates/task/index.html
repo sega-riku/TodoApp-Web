@@ -11,6 +11,43 @@
 
     <title>Todoアプリメイン画面</title>
     <style>
+        .task-title-line {
+            display: flex;
+            align-items: flex-start;
+            min-width: 0;
+        }
+
+        .task-title-icon {
+            flex-shrink: 0;
+            margin-right: 0.5rem;
+        }
+
+        .task-title-text {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .task-detail-line {
+            display: flex;
+            align-items: flex-start;
+            min-width: 0;
+        }
+
+        .task-detail-icon {
+            flex-shrink: 0;
+            margin-right: 0.5rem;
+        }
+
+        .task-detail-time {
+            flex-shrink: 0;
+            margin-right: 0.75rem;
+        }
+
+        .task-detail-text {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
         @media (max-width: 991.98px) {
 
             .header-actions {
@@ -383,14 +420,14 @@
                                 <!--タスク名 + ステータス-->
                                 <div class="d-flex align-items-center gap-2">
 
-                                    <div class="fw-semibold">
+                                    <div class="fw-semibold task-title-line">
 
-                                        <span>
+                                        <span class="task-title-icon">
                                             📅
                                         </span>
 
                                         <span
-                                            class="ms-1"
+                                            class="task-title-text"
                                             th:text="${group.title}">
                                             タスク名
                                         </span>
@@ -521,14 +558,15 @@
                                     <!--時間・詳細-->
                                     <div class="flex-grow-1 task-item-content">
 
-                                        <span
+                                        <div
+                                            class="task-detail-line"
                                             th:classappend="${task.completed
                                                 ? ' text-secondary text-decoration-line-through'
                                                 : ''}">
 
                                             <span
                                                 th:if="${task.time != null}"
-                                                class="fw-semibold"
+                                                class="fw-semibold task-detail-time"
                                                 th:text="${task.time}">
                                                 10:00
                                             </span>
@@ -536,7 +574,8 @@
                                             <span
                                                 th:if="${task.description != null
                                                     && !task.description.isBlank()}"
-                                                th:text="${(task.time != null ? '　' : '') + task.description}">
+                                                class="task-detail-text"
+                                                th:text="${task.description}">
                                                 詳細
                                             </span>
 
@@ -547,7 +586,7 @@
                                                 時間・詳細なし
                                             </span>
 
-                                        </span>
+                                        </div>
 
                                     </div>
 
@@ -768,14 +807,14 @@
                                 <!--タスク名 + ステータス-->
                                 <div class="d-flex align-items-center gap-2">
 
-                                    <div class="fw-semibold">
+                                    <div class="fw-semibold task-title-line">
 
-                                        <span>
+                                        <span class="task-title-icon">
                                             ⏰
                                         </span>
 
                                         <span
-                                            class="ms-1"
+                                            class="task-title-text"
                                             th:text="${group.title}">
                                             タスク名
                                         </span>
@@ -922,32 +961,36 @@
                                     <!--時間・詳細-->
                                     <div class="flex-grow-1 task-item-content">
 
-                                        <!--緊急度アイコン-->
-                                        <span
-                                            th:text="${task.expired
-                                                ? '🚨'
-                                                : !task.deadline.isAfter(threeDaysLater)
-                                                    ? '⚠️'
-                                                    : '⏰'}">
-                                        </span>
-
-                                        <!--時間・詳細-->
-                                        <span
+                                        <div
+                                            class="task-detail-line"
                                             th:classappend="${task.completed
                                                 ? ' text-secondary text-decoration-line-through'
                                                 : ''}">
 
+                                            <!--緊急度アイコン-->
+                                            <span
+                                                class="task-detail-icon"
+                                                th:text="${task.expired
+                                                    ? '🚨'
+                                                    : !task.deadline.isAfter(threeDaysLater)
+                                                        ? '⚠️'
+                                                        : '⏰'}">
+                                            </span>
+
+                                            <!--時間-->
                                             <span
                                                 th:if="${task.time != null}"
-                                                class="fw-semibold"
-                                                th:text="${' ' + task.time}">
+                                                class="fw-semibold task-detail-time"
+                                                th:text="${task.time}">
                                                 23:59
                                             </span>
 
+                                            <!--詳細-->
                                             <span
                                                 th:if="${task.description != null
                                                     && !task.description.isBlank()}"
-                                                th:text="${(task.time != null ? '　' : ' ') + task.description}">
+                                                class="task-detail-text"
+                                                th:text="${task.description}">
                                                 詳細
                                             </span>
 
@@ -958,7 +1001,7 @@
                                                 時間・詳細なし
                                             </span>
 
-                                        </span>
+                                        </div>
 
                                     </div>
 
