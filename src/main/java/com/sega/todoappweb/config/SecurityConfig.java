@@ -39,7 +39,10 @@ public class SecurityConfig {
                     "/login",
                     "/register",
                     "/password/forgot",
-                    "/password/reset"
+                    "/password/reset",
+                    "/manifest.json",
+                    "/service-worker.js",
+                    "/icons/**"
                 ).permitAll()
 
                 //管理者のみアクセス可能

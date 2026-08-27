@@ -9,6 +9,11 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <!--PWA設定-->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#1698c9">
+
     <title>ログイン</title>
 
     <style>
@@ -52,10 +57,10 @@
                     </div>
 
                     <div
-                    th:if="${param.passwordReset}"
-                    class="alert alert-success text-center">
-                    パスワードを再設定しました。<br>
-                    新しいパスワードでログインしてください。
+                        th:if="${param.passwordReset}"
+                        class="alert alert-success text-center">
+                        パスワードを再設定しました。<br>
+                        新しいパスワードでログインしてください。
                     </div>
 
                     <div
@@ -110,15 +115,18 @@
                                     onclick="togglePassword('password',this)">
                                     表示
                                 </button>
+
                             </div>
 
                         </div>
 
                         <!--パスワード再設定-->
                         <div class="text-end mb-4">
+
                             <a th:href="@{/password/forgot}">
                                 パスワードを忘れた方はこちら
                             </a>
+
                         </div>
 
                         <!-- ボタンエリア -->
@@ -155,6 +163,7 @@
         </div>
 
     </div>
+
     <!--パスワード表示ボタン-->
     <script>
         function togglePassword(inputId, button) {
@@ -172,6 +181,24 @@
                 input.type = "password";
                 button.textContent = "表示";
             }
+        }
+    </script>
+
+    <!--Service Worker登録-->
+    <script>
+        if ("serviceWorker" in navigator) {
+
+            window.addEventListener(
+                "load",
+                function () {
+
+                    navigator.serviceWorker.register(
+                        "/service-worker.js"
+                    );
+
+                }
+            );
+
         }
     </script>
 
