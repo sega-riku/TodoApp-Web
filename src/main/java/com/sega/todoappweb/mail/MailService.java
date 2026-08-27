@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
@@ -131,6 +132,7 @@ public class MailService {
     }
 
     //管理者向けお問い合わせ通知メール送信処理
+    @Async
     public void sendContactNotificationMail(
         String username,
         String contactType
@@ -215,15 +217,19 @@ public class MailService {
             );
         }
     }
+
     //ユーザー向けお問い合わせ返信通知メール送信処理
+    @Async
     public void sendContactReplyNotificationMail(
         String toEmail,
         String username
-        ) {
+    ) {
+
         try {
+
             MimeMessage message =
                 mailSender.createMimeMessage();
-        
+
             MimeMessageHelper helper =
                 new MimeMessageHelper(
                     message,
@@ -249,11 +255,13 @@ public class MailService {
             String html =
                 """
                 <div style="font-family: sans-serif; line-height: 1.7;">
+
                     <h2>Tascale</h2>
+
                     <p>
                         %sさん
                     </p>
-                    
+
                     <p>
                         お問い合わせへの返信が届きました。
                     </p>
@@ -268,6 +276,7 @@ public class MailService {
                     <p style="font-size: 0.9rem; color: #666;">
                         このメールはTascaleから自動送信されています。
                     </p>
+
                 </div>
                 """.formatted(
                     username
@@ -285,7 +294,7 @@ public class MailService {
 
         } catch (
             MessagingException
-        |   UnsupportedEncodingException e
+            | UnsupportedEncodingException e
         ) {
 
             throw new RuntimeException(
