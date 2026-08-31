@@ -1,6 +1,5 @@
 package com.sega.todoappweb.admin;
 
-import com.sega.todoappweb.contact.ContactController;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -40,7 +39,7 @@ public class AdminController {
         PasswordEncoder passwordEncoder,
         TaskRepository taskRepository,
         ContactRepository contactRepository,
-        MailService mailService, ContactController contactController
+        MailService mailService
     ) {
         this.userRepository = userRepository;
         this.adminNotificationRepository = adminNotificationRepository;
@@ -411,6 +410,58 @@ public class AdminController {
         }
 
         return "redirect:/admin/contact/history";
+    }
+
+    //全ユーザー向けお知らせメール送信処理
+    @PostMapping("/admin/announcement-mail")
+        public String sendAnnouncementMail(
+        @RequestParam String subject,
+        @RequestParam String content,
+        RedirectAttributes redirectAttributes
+    ) {
+
+    //件名・本文空白チェック
+    if (
+        subject == null
+        || subject.isBlank()
+        || content == null
+        || content.isBlank()
+    ) {
+
+        redirectAttributes.addFlashAttribute(
+            "announcementMailError",
+            "件名と本文を入力してください。"
+        );
+
+        return "redirect:/admin";
+    }
+
+    //全ユーザー取得
+    List<User> users =
+        userRepository.findAll();
+
+    //メールアドレスが存在するユーザーへ送信
+    for (User user : users) {
+
+        if (
+            user.getEmail() != null
+            && !user.getEmail().isBlank()
+        ) {
+
+                mailService.sendAnnouncementMail(
+                    user.getEmail(),
+                    subject.trim(),
+                    content.trim()
+                );
+            }
+        }
+
+        redirectAttributes.addFlashAttribute(
+            "announcementMailSuccess",
+            "全ユーザーへお知らせメールを送信しました。"
+        );
+
+        return "redirect:/admin";
     }
 
     //ユーザー詳細画面処理

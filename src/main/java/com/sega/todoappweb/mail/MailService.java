@@ -303,4 +303,48 @@ public class MailService {
             );
         }
     }
+    //ユーザー向けお知らせメール送信処理
+    @Async
+    public void sendAnnouncementMail(
+        String toEmail,
+        String subject,
+        String content
+    ){
+        try{
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message,false,"UTF-8");
+
+            //送信元表示名
+            helper.setFrom(fromEmail,"Tascale");
+
+            //ユーザーのメールアドレス
+            helper.setTo(toEmail);
+
+            helper.setSubject("【Tascale】" + subject);
+
+            String html =
+                """
+                <div stylr="font-family: sans-serif; line-height: 1.7;">
+                    <h2>Tascale</h2>
+
+                    <p>
+                        Tascale運営からのお知らせです。
+                    </p>
+
+                    <p style="white-space: pre-wrap;">%s</p>
+
+                    <hr>
+
+                    <p style="font-size: 0.9rem; color: #666;">
+                        このメールはTascaleから送信されています。
+                    </p>
+                </div>
+                        """.formatted(content);
+
+            helper.setText(html,true);
+            mailSender.send(message);
+        }catch(MessagingException | UnsupportedEncodingException e){
+            throw new RuntimeException("お知らせメールの送信に失敗しました", e);
+        }
+    }
 }

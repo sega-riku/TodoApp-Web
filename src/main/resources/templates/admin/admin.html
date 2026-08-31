@@ -353,6 +353,88 @@
 
                 </div>
 
+                <!--全ユーザー向けお知らせメール-->
+                <h3 class="mb-3">
+                    お知らせメール
+                </h3>
+
+                <div class="card mb-4">
+
+                    <div class="card-body">
+
+                        <!--送信完了メッセージ-->
+                        <div
+                            th:if="${announcementMailSuccess}"
+                            class="alert alert-success"
+                            th:text="${announcementMailSuccess}">
+                            全ユーザーへお知らせメールを送信しました。
+                        </div>
+
+                        <!--送信エラーメッセージ-->
+                        <div
+                            th:if="${announcementMailError}"
+                            class="alert alert-danger"
+                            th:text="${announcementMailError}">
+                            件名と本文を入力してください。
+                        </div>
+
+                        <!--お知らせメール送信フォーム-->
+                        <form
+                            th:action="@{/admin/announcement-mail}"
+                            method="post"
+                            onsubmit="return confirm(
+                                '全ユーザーへお知らせメールを送信します。\n本当によろしいですか？'
+                            );">
+
+                            <!--件名-->
+                            <div class="mb-3">
+
+                                <label
+                                    for="announcementSubject"
+                                    class="form-label">
+                                    件名
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="announcementSubject"
+                                    name="subject"
+                                    class="form-control"
+                                    required>
+
+                            </div>
+
+                            <!--本文-->
+                            <div class="mb-3">
+
+                                <label
+                                    for="announcementContent"
+                                    class="form-label">
+                                    本文
+                                </label>
+
+                                <textarea
+                                    id="announcementContent"
+                                    name="content"
+                                    class="form-control"
+                                    rows="5"
+                                    required></textarea>
+
+                            </div>
+
+                            <!--送信ボタン-->
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100">
+                                全ユーザーへ送信
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
 
                 <h3 class="mb-3">
                     管理サマリー
