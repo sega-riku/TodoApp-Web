@@ -62,9 +62,9 @@
                                 <span
                                     th:text="${task.dateType
                                         == T(com.sega.todoappweb.task.DateType).SCHEDULE
-                                        ? '📅 予定'
+                                        ? '📝 予定'
                                         : '⏰ 締切'}">
-                                    📅 予定
+                                    📝 予定
                                 </span>
 
                             </p>
@@ -100,11 +100,17 @@
                             <!--時間-->
                             <div class="mb-3">
 
+                                <!--開始時間・締切時間-->
                                 <label class="form-label">
-                                    時間
+
+                                    <span id="timeLabel">
+                                        開始時間
+                                    </span>
+
                                     <span class="text-secondary">
                                         (任意)
                                     </span>
+
                                 </label>
 
                                 <input
@@ -112,6 +118,27 @@
                                     name="time"
                                     class="form-control"
                                     onclick="this.showPicker()">
+
+                                <!--終了時間-->
+                                <div
+                                    id="endTimeArea"
+                                    class="mt-3">
+
+                                    <label class="form-label">
+                                        終了時間
+                                        <span class="text-secondary">
+                                            (任意)
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        id="endTime"
+                                        name="endTime"
+                                        class="form-control"
+                                        onclick="this.showPicker()">
+
+                                </div>
 
                             </div>
 
@@ -162,6 +189,44 @@
         </div>
 
     </div>
+
+    <script th:inline="javascript">
+
+        const dateType =
+            /*[[${task.dateType.name()}]]*/ "SCHEDULE";
+
+        const timeLabel =
+            document.getElementById("timeLabel");
+
+        const endTimeArea =
+            document.getElementById("endTimeArea");
+
+        const endTime =
+            document.getElementById("endTime");
+
+        //時間表示切り替え
+        if (dateType === "SCHEDULE") {
+
+            timeLabel.textContent =
+                "開始時間";
+
+            endTimeArea.style.display =
+                "block";
+
+        } else {
+
+            timeLabel.textContent =
+                "締切時間";
+
+            endTimeArea.style.display =
+                "none";
+
+            endTime.value =
+                "";
+
+        }
+
+    </script>
 
 </body>
 

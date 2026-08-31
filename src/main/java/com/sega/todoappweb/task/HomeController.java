@@ -1,5 +1,6 @@
 package com.sega.todoappweb.task;
 
+import com.sega.todoappweb.admin.AdminController;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -26,6 +27,7 @@ import com.sega.todoappweb.contact.ContactRepository;
 @Controller
 public class HomeController {
 
+    private final AdminController adminController;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ContactRepository contactRepository;
@@ -33,11 +35,12 @@ public class HomeController {
     public HomeController(
         TaskRepository taskRepository,
         UserRepository userRepository,
-        ContactRepository contactRepository
+        ContactRepository contactRepository, AdminController adminController
     ) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.contactRepository = contactRepository;
+        this.adminController = adminController;
     }
 
     // メイン画面処理
@@ -123,32 +126,26 @@ public class HomeController {
                 expired
                 && task.isCompleted();
 
-            boolean pastSchedule =
-                false;
+            boolean pastSchedule = false;
 
-            // 予定の過去判定処理
-            if (
-                task.getDateType()
-                == DateType.SCHEDULE
-            ) {
+            //予定の過去判定処理
+            if(task.getDateType() == DateType.SCHEDULE){
+                LocalTime groupStartTime = task.getGroupStartTime();
+                LocalTime groupEndTime = task.getGroupEndTime();
+                
+                //予定全体の終了時間がある場合
+                if(groupEndTime != null){
+                    LocalDateTime taskDateTime = LocalDateTime.of(task.getDeadline(),groupEndTime);
+                    pastSchedule = taskDateTime.isBefore(now);
 
-                // 時間未設定の場合は日付のみで判定
-                if (task.getTime() == null) {
-
-                    pastSchedule =
-                        task.getDeadline()
-                            .isBefore(today);
-
-                } else {
-
-                    LocalDateTime taskDateTime =
-                        LocalDateTime.of(
-                            task.getDeadline(),
-                            task.getTime()
-                        );
-
-                    pastSchedule =
-                        taskDateTime.isBefore(now);
+                //予定全体の開始時間だけある場合
+                }else if(groupStartTime != null){
+                    LocalDateTime taskDateTime = LocalDateTime.of(task.getDeadline(),groupStartTime);
+                    pastSchedule = taskDateTime.isBefore(now);
+                
+                //予定全体の時間がない場合
+                }else{
+                    pastSchedule = task.getDeadline().isBefore(today);
                 }
             }
 
@@ -353,6 +350,23 @@ public class HomeController {
             }
         }
 
+
+        //タスクグループを日付・全体時間順に並び替え
+        taskGroups.sort(
+            Comparator
+                .comparing(
+                TaskGroup::getDeadline
+            )
+            .thenComparing(
+                group -> group.getTasks()
+                    .get(0)
+                    .getGroupStartTime(),
+                Comparator.nullsLast(
+                    Comparator.naturalOrder()
+                )
+            )
+        );
+
         // 「予定・締切」に表示するタスク
         for (Task task : tasks) {
 
@@ -393,7 +407,7 @@ public class HomeController {
                     Task::getDeadline
                 )
                 .thenComparing(
-                    Task::getTime,
+                    Task::getGroupStartTime,
                     Comparator.nullsLast(
                         Comparator.naturalOrder()
                     )
@@ -476,30 +490,28 @@ public class HomeController {
 
                     boolean upcomingSchedule;
 
-                    // 時間未設定の場合は当日も表示
-                    if (task.getTime() == null) {
+                    LocalTime groupStartTime = task.getGroupStartTime();
+                    LocalTime groupEndTime = task.getGroupEndTime();
 
-                        upcomingSchedule =
-                            !task.getDeadline()
-                                .isBefore(today);
+                    //予定全体の終了時間がある場合
+                    if(groupEndTime != null){
+                        LocalDateTime taskDateTime = LocalDateTime.of(task.getDeadline(), groupEndTime);
 
-                    } else {
+                        upcomingSchedule = !taskDateTime.isBefore(now);
+                    
+                    //予定全体の開始時間だけある場合
+                    }else if(groupStartTime != null){
+                        LocalDateTime taskDateTime = LocalDateTime.of(task.getDeadline(),groupStartTime);
 
-                        LocalDateTime taskDateTime =
-                            LocalDateTime.of(
-                                task.getDeadline(),
-                                task.getTime()
-                            );
+                        upcomingSchedule = !taskDateTime.isBefore(now);
 
-                        upcomingSchedule =
-                            !taskDateTime
-                                .isBefore(now);
+                    //予定全体の時間がない場合
+                    }else{
+                        upcomingSchedule = !task.getDeadline().isBefore(today);
                     }
 
                     if (upcomingSchedule) {
-
-                        hasUpcomingIncompleteTask =
-                            true;
+                        hasUpcomingIncompleteTask = true;
                     }
                 }
             }
@@ -594,7 +606,7 @@ public class HomeController {
                     Task::getDeadline
                 )
                 .thenComparing(
-                    Task::getTime,
+                    Task::getGroupStartTime,
                     Comparator.nullsLast(
                         Comparator.naturalOrder()
                     )
@@ -1431,17 +1443,20 @@ public class HomeController {
     @GetMapping("/add")
     public String addTask(
         @RequestParam(required = false) LocalDate deadline,
+        @RequestParam(required = false) DateType dateType,
         Model model
-    ) {
+    ){
+        //日付指定で追加画面を開いた場合
+        model.addAttribute("selectedDeadline",deadline);
 
-        // 日付指定で追加画面を開いた場合
-        model.addAttribute(
-            "selectedDeadline",
-            deadline
-        );
+        //予定・締切区分指定
+        model.addAttribute("selectedDateType",dateType);
 
         return "task/addTask";
     }
+    
+    
+
 
     // タスク追加処理
     @PostMapping("/add")
@@ -1449,9 +1464,11 @@ public class HomeController {
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam(required = false) LocalTime time,
+        @RequestParam(required = false) LocalTime endTime,
         @RequestParam DateType dateType,
         @RequestParam(required = false) String description,
-        Principal principal
+        Principal principal,
+        RedirectAttributes redirectAttributes
     ) {
 
         // ログインユーザー取得処理
@@ -1462,19 +1479,136 @@ public class HomeController {
                 )
                 .orElseThrow();
 
+        //締切の場合は終了時間を使用しない
+        if (dateType == DateType.DEADLINE) {
+
+            endTime =
+                null;
+        }
+
+        //終了時間のみ入力チェック
+        if (
+            time == null
+            && endTime != null
+        ) {
+
+            redirectAttributes.addFlashAttribute(
+                "timeError",
+                "開始時間を入力してください。"
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredTitle",
+                title
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDeadline",
+                deadline
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredTime",
+                time
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredEndTime",
+                endTime
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDateType",
+                dateType
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDescription",
+                description
+            );
+
+            return "redirect:/add";
+        }
+
+        //終了時間チェック
+        if (
+            time != null
+            && endTime != null
+            && (
+                endTime.isBefore(time)
+                || endTime.equals(time)
+            )
+        ) {
+
+            redirectAttributes.addFlashAttribute(
+                "timeError",
+                "終了時間は開始時間より後にしてください。"
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredTitle",
+                title
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDeadline",
+                deadline
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredTime",
+                time
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredEndTime",
+                endTime
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDateType",
+                dateType
+            );
+
+            redirectAttributes.addFlashAttribute(
+                "enteredDescription",
+                description
+            );
+
+            return "redirect:/add";
+        }
+
         Task task =
             new Task(
                 title,
                 deadline,
                 time,
+                endTime,
                 dateType,
                 description
             );
+
+        //タスク全体の時間設定
+        task.setGroupStartTime(time);
+
+        //予定の場合
+        if(dateType == DateType.SCHEDULE){
+            task.setGroupEndTime(endTime);
+        //締切の場合
+        }else{
+            task.setGroupEndTime(null);
+        }
+
+        //個別タスクの時間は未設定
+        task.setTime(null);
+        task.setEndTime(null);
 
         // タスク所有ユーザー設定
         task.setUser(
             loginUser
         );
+
+        
 
         taskRepository.save(
             task
@@ -1483,7 +1617,7 @@ public class HomeController {
         return "redirect:/";
     }
 
-    // 既存タスクに時間・詳細を追加する画面
+// 既存タスクに時間・詳細を追加する画面
     @GetMapping("/task/time/add/{id}")
     public String addTaskTime(
         @PathVariable Long id,
@@ -1530,74 +1664,178 @@ public class HomeController {
     public String addTaskTime(
         @PathVariable Long id,
         @RequestParam(required = false) LocalTime time,
+        @RequestParam(required = false) LocalTime endTime,
         @RequestParam(required = false) String description,
         Principal principal,
         RedirectAttributes redirectAttributes
     ) {
 
-        // ログインユーザー取得処理
-        User loginUser =
-            userRepository
-                .findByUsername(
-                    principal.getName()
-                )
-                .orElseThrow();
-
-        Task baseTask =
-            taskRepository
-                .findById(id)
-                .orElseThrow();
-
-        // タスク所有ユーザー確認処理
-        if (
-            baseTask.getUser() == null
-            || !baseTask.getUser()
-                .getId()
-                .equals(
-                    loginUser.getId()
-                )
-        ) {
-
-            return "redirect:/";
-        }
-
-        // 時間・詳細未入力チェック
-        if (
-            time == null
-            && (
-                description == null
-                || description.isBlank()
+    // ログインユーザー取得処理
+    User loginUser =
+        userRepository
+            .findByUsername(
+                principal.getName()
             )
-        ) {
+            .orElseThrow();
 
-            redirectAttributes.addFlashAttribute(
-                "taskTimeAddError",
-                "時間または詳細のどちらかを入力してください。"
-            );
+    Task baseTask =
+        taskRepository
+            .findById(id)
+            .orElseThrow();
+
+    // タスク所有ユーザー確認処理
+    if (
+        baseTask.getUser() == null
+        || !baseTask.getUser()
+            .getId()
+            .equals(
+                loginUser.getId()
+            )
+    ) {
+
+        return "redirect:/";
+    }
+
+    //締切の場合は終了時間を使用しない
+    if (
+        baseTask.getDateType()
+        == DateType.DEADLINE
+    ) {
+
+        endTime =
+            null;
+    }
+
+    //終了時間のみ入力チェック
+    if (
+        time == null
+        && endTime != null
+    ) {
+
+        redirectAttributes.addFlashAttribute(
+            "taskTimeAddError",
+            "開始時間を入力してください。"
+        );
+
+        return "redirect:/task/time/add/" + id;
+    }
+
+    //終了時間チェック
+    if (
+        time != null
+        && endTime != null
+        && (
+            endTime.isBefore(time)
+            || endTime.equals(time)
+        )
+    ) {
+
+        redirectAttributes.addFlashAttribute(
+            "taskTimeAddError",
+            "終了時間は開始時間より後にしてください。"
+        );
+
+        return "redirect:/task/time/add/" + id;
+    }
+
+    //予定全体の時間範囲チェック
+    if (
+        baseTask.getDateType() == DateType.SCHEDULE
+        && time != null   
+    ) {
+        LocalTime groupStartTime = baseTask.getGroupStartTime();
+        LocalTime groupEndTime = baseTask.getGroupEndTime();
+
+        //開始時間が予定全体より前
+        if(groupStartTime != null && time.isBefore(groupStartTime)){
+            redirectAttributes.addFlashAttribute("taskTimeAddError","開始時間は予定全体の開始時間以降にしてください。");
 
             return "redirect:/task/time/add/" + id;
         }
 
-        Task newTask =
-            new Task(
-                baseTask.getTitle(),
-                baseTask.getDeadline(),
-                time,
-                baseTask.getDateType(),
-                description
-            );
+        //開始時間が予定全体より後
+        if(
+            groupEndTime != null
+            && time.isAfter(groupEndTime)
+        ){
+            redirectAttributes.addFlashAttribute("taskTimeAddError","開始時間は予定全体の終了以前にしてください。");
 
-        // タスク所有ユーザー設定
-        newTask.setUser(
-            loginUser
-        );
+            return "redirect:/task/time/add/" + id;
+        }
 
-        taskRepository.save(
-            newTask
-        );
+        //終了時間が予定全体より後
+        if(
+            groupEndTime != null
+            && endTime != null
+            && endTime.isAfter(groupEndTime)
+        ){
+            redirectAttributes.addFlashAttribute("taskTimeAddError","終了時間は予定全体の終了時間以前にしてください。");
 
-        return "redirect:/";
+            return "redirect:/task/time/add/" + id;   
+        }
+        
     }
+
+    //締切時間の範囲チェック
+    if(
+        baseTask.getDateType() == DateType.DEADLINE && time != null
+    ){
+        LocalTime deadlineTime = baseTask.getGroupStartTime();
+
+        //締切より後
+        if (
+            deadlineTime != null
+            && time.isAfter(deadlineTime)
+        ) {
+            redirectAttributes.addFlashAttribute("taskTimeAddError", "時間は締切時間以前にしてください。");
+
+            return "redirect:/task/time/add/" + id;
+        }
+    }
+
+    // 時間・詳細未入力チェック
+    if (
+        time == null
+        && (
+            description == null
+            || description.isBlank()
+        )
+    ) {
+
+        redirectAttributes.addFlashAttribute(
+            "taskTimeAddError",
+            "時間または詳細のどちらかを入力してください。"
+        );
+
+        return "redirect:/task/time/add/" + id;
+    }
+
+    Task newTask =
+        new Task(
+            baseTask.getTitle(),
+            baseTask.getDeadline(),
+            time,
+            endTime,
+            baseTask.getDateType(),
+            description
+        );
+
+    //予定全体の時間を引き継ぐ
+    newTask.setGroupStartTime(baseTask.getGroupStartTime());
+
+    newTask.setGroupEndTime(baseTask.getGroupEndTime());
+
+    // タスク所有ユーザー設定
+    newTask.setUser(
+        loginUser
+    );
+
+    taskRepository.save(
+        newTask
+    );
+
+    return "redirect:/";
+}
 
     // 個別タスク完了処理
     @GetMapping("/complete/{id}")
@@ -1991,7 +2229,10 @@ public class HomeController {
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam DateType dateType,
-        Principal principal
+        @RequestParam(required = false)LocalTime groupStartTime,
+        @RequestParam(required = false)LocalTime groupEndTime,
+        Principal principal,
+        RedirectAttributes redirectAttributes
     ) {
 
         // ログインユーザー取得処理
@@ -2021,6 +2262,35 @@ public class HomeController {
             return "redirect:/";
         }
 
+        //締切の場合は予定全体の時間を使用しない
+        if(dateType == DateType.DEADLINE){
+            groupEndTime = null;
+        }
+
+        //終了時間のみ入力チェック
+        if(
+            groupStartTime == null
+            && groupEndTime != null
+        ){
+            redirectAttributes.addFlashAttribute("timeError","開始時間を入力してください。");
+
+            return "redirect:/edit/group/" + id;
+        }
+
+        //終了時間チェック
+        if (
+             groupStartTime != null
+             && groupEndTime != null
+             &&(
+                groupEndTime.isBefore(groupStartTime)
+                || groupEndTime.equals(groupStartTime)
+             )
+        ) {
+            redirectAttributes.addFlashAttribute("timeError","終了時間は開始時間より後にしてください。");
+
+            return "redirect:/edit/group/" + id;
+        }
+
         // 変更前グループ情報保持処理
         String oldTitle =
             baseTask.getTitle();
@@ -2036,6 +2306,76 @@ public class HomeController {
             taskRepository.findByUser(
                 loginUser
             );
+
+        //既存タスクの時間範囲チェック
+        if(dateType == DateType.SCHEDULE){
+            for(Task task : tasks){
+                boolean sameDate = task.getDeadline().equals(oldDeadline);
+                boolean sameTitle = task.getTitle().equals(oldTitle);
+                boolean sameDateType = task.getDateType() == oldDateType;
+
+                if(sameDate && sameTitle && sameDateType){
+                    //タスク開始時間が予定全体より前
+                    if(
+                        groupStartTime != null
+                        && task.getTime() != null
+                        && task.getTime().isBefore(groupStartTime)
+                    ){
+                        redirectAttributes.addFlashAttribute("timeError","既存のタスク時間が予定全体の時間範囲外になります。");
+
+                        return "redirect:/edit/group/" + id;
+                    }
+
+                    //タスク開始時間が予定全体より後
+                    if(
+                        groupEndTime != null
+                        && task.getTime() != null
+                        && task.getTime().isAfter(groupEndTime)
+                    ){
+                        redirectAttributes.addFlashAttribute("timeError","既存のタスク時間が予定全体の時間範囲外になります。");
+
+                        return "redirect:/edit/group/" + id;
+                    }
+
+                    //タスク終了時間が予定全体より後
+                    if(
+                        groupEndTime != null
+                        && task.getEndTime() != null
+                        && task.getEndTime().isAfter(groupEndTime)
+                    ){
+                        redirectAttributes.addFlashAttribute("timeError","既存タスク時間が予定全体の時間範囲外になります。");
+
+                        return "redirect:/edit/group/" + id;
+                    }
+                }
+            }
+        }
+
+        //締切時間の範囲チェック
+        if(dateType == DateType.DEADLINE){
+            for(Task task : tasks){
+                boolean sameDate = task.getDeadline().equals(oldDeadline);
+                boolean sameTitle = task.getTitle().equals(oldTitle);
+                boolean sameDateType = task.getDateType() == oldDateType;
+
+                if(sameDate && sameTitle && sameDateType){
+
+                    //既存タスクが締切時間より後
+                    if(
+                        groupStartTime != null
+                        && task.getTime() != null
+                        && task.getTime().isAfter(groupStartTime)
+                    ){
+                        redirectAttributes.addFlashAttribute(
+                            "timeError",
+                            "既存のタスク時間が締切時間より後になります。"
+                        );
+
+                        return "redirect:/edit/group/" + id;
+                    }
+                }
+            }
+        }
 
         // 同一グループ一括更新処理
         for (Task task : tasks) {
@@ -2072,6 +2412,14 @@ public class HomeController {
 
                 task.setDateType(
                     dateType
+                );
+
+                task.setGroupStartTime(
+                    groupStartTime
+                );
+
+                task.setGroupEndTime(
+                    groupEndTime
                 );
 
                 taskRepository.save(
@@ -2137,9 +2485,11 @@ public class HomeController {
         @RequestParam String title,
         @RequestParam LocalDate deadline,
         @RequestParam(required = false) LocalTime time,
+        @RequestParam(required = false) LocalTime endTime,
         @RequestParam DateType dateType,
         @RequestParam(required = false) String description,
-        Principal principal
+        Principal principal,
+        RedirectAttributes redirectAttributes
     ) {
 
         // ログインユーザー取得処理
@@ -2168,6 +2518,83 @@ public class HomeController {
             return "redirect:/";
         }
 
+        //締切の場合は終了時間を使用しない
+        if(dateType == DateType.DEADLINE){
+            endTime = null;
+        }
+
+        //終了時間のみ入力チェック
+        if(time == null && endTime != null){
+            redirectAttributes.addFlashAttribute("timeError","開始時間を入力してください");
+
+            return "redirect:/edit/" + id;
+        }
+
+        //終了時間チェック
+        if(time != null && endTime != null
+            &&(endTime.isBefore(time) || endTime.equals(time))        
+        ){
+            redirectAttributes.addFlashAttribute("timeError", "終了時間は開始時間より後にしてください。");
+
+            return "redirect:/edit/" + id;
+        }
+
+        //予定全体の時間範囲チェック
+        if(
+            task.getDateType() == DateType.SCHEDULE
+            && time != null
+        ){
+
+            LocalTime groupStartTime = task.getGroupStartTime();
+            LocalTime groupEndTime = task.getGroupEndTime();
+
+            //開始時間が予定全体より前
+            if(
+                groupStartTime != null
+                && time.isBefore(groupStartTime)
+            ){
+                redirectAttributes.addFlashAttribute("timeError","開始時間は予定全体の開始時間以降にしてください。");
+
+                return "redirect:/edit/" + id;
+            }
+
+            //開始時間が予定全体より後
+            if(
+                groupEndTime != null
+                && time.isAfter(groupEndTime)
+            ){
+                redirectAttributes.addFlashAttribute("timeError","開始時間は予定全体の終了時間以前にしてください。"
+                );
+
+                return "redirect:/edit/" + id;
+            }
+
+            //終了時間が予定全体より後
+            if(
+                groupEndTime != null
+                && endTime != null
+                && endTime.isAfter(groupEndTime)
+            ){
+                redirectAttributes.addFlashAttribute("timeError","終了時間は予定全体の終了時間以前にしてください。");
+
+                return "redirect:/edit/" + id;
+            }
+        }
+        //締切時間の範囲チェック
+        if(
+            task.getDateType() == DateType.DEADLINE
+            && time != null
+        ){
+            LocalTime deadlineTime = task.getGroupStartTime();
+
+            //締切時間より後
+            if(deadlineTime != null && time.isAfter(deadlineTime)){
+                redirectAttributes.addFlashAttribute("timeError", "時間は締切時間以前にしてください。");
+
+                return "redirect:/edit/" + id;
+            }
+        }
+
         task.setTitle(
             title
         );
@@ -2180,6 +2607,10 @@ public class HomeController {
             time
         );
 
+        task.setEndTime(
+            endTime
+        );
+
         task.setDateType(
             dateType
         );
@@ -2188,9 +2619,7 @@ public class HomeController {
             description
         );
 
-        taskRepository.save(
-            task
-        );
+        taskRepository.save(task);
 
         return "redirect:/";
     }

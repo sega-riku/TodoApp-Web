@@ -23,6 +23,9 @@ public class Task {
     private String title;
     private LocalDate deadline;
     private LocalTime time;
+    private LocalTime endTime;
+    private LocalTime groupStartTime;
+    private LocalTime groupEndTime;
     private DateType dateType;
     private boolean completed;
     private String description;
@@ -41,12 +44,14 @@ public class Task {
         String title,
         LocalDate deadline,
         LocalTime time,
+        LocalTime endTime,
         DateType dateType,
         String description
     ) {
         this.title = title; //タスク名設定
         this.deadline = deadline; //予定・締切日設定
-        this.time = time;
+        this.time = time; //開始時間
+        this.endTime = endTime; //終了時間
         this.dateType = dateType;
         this.completed = false; //完了ステータスを「未完了」と設定
         this.description = description;
@@ -56,6 +61,7 @@ public class Task {
         String title,
         LocalDate deadline,
         LocalTime time,
+        LocalTime endTime,
         DateType dateType,
         boolean completed,
         String description
@@ -63,6 +69,7 @@ public class Task {
         this.title = title;
         this.deadline = deadline;
         this.time = time;
+        this.endTime = endTime;
         this.dateType = dateType;
         this.completed = completed;
         this.description = description;
@@ -101,15 +108,15 @@ public class Task {
             return false;
         }
 
-        //時間未設定の場合は日付のみで判定
-        if (this.time == null) {
+        //締切時間未設定の場合は日付のみで判定
+        if (this.groupStartTime == null) {
             return this.deadline.isBefore(LocalDate.now());
         }
 
         LocalDateTime taskDateTime =
             LocalDateTime.of(
                 this.deadline,
-                this.time
+                this.groupStartTime
             );
 
         return taskDateTime.isBefore(
@@ -127,6 +134,18 @@ public class Task {
 
     public LocalDateTime getCompletedAt(){
         return this.completedAt;
+    }
+
+    public LocalTime getEndTime(){
+        return this.endTime;
+    }
+
+    public LocalTime getGroupStartTime(){
+        return this.groupStartTime;
+    }
+
+    public LocalTime getGroupEndTime(){
+        return this.groupEndTime;
     }
 
     //setter
@@ -166,5 +185,17 @@ public class Task {
 
     public void setcompletedAt(LocalDateTime completedAt){
         this.completedAt = completedAt;
+    }
+
+    public void setEndTime(LocalTime endTime){
+        this.endTime = endTime;
+    }
+
+    public void setGroupStartTime(LocalTime groupStartTime){
+        this.groupStartTime = groupStartTime;
+    }
+
+    public void setGroupEndTime(LocalTime groupEndTime){
+        this.groupEndTime = groupEndTime;
     }
 }

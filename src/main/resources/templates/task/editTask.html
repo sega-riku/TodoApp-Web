@@ -43,6 +43,12 @@
                             <!--タスク名-->
                             <div class="mb-3">
 
+                            <div
+                                th:if="${timeError}"
+                                class="alert alert-danger"
+                                th:text="${timeError}">
+                            </div>
+
                                 <label class="form-label">
                                     タスク名
                                 </label>
@@ -67,6 +73,7 @@
                                     </label>
 
                                     <select
+                                        id="dateType"
                                         name="dateType"
                                         class="form-select"
                                         required>
@@ -110,7 +117,10 @@
                             <div class="mb-4">
 
                                 <label class="form-label">
-                                    時間
+                                    <span id="timeLabel">
+                                        開始時間
+                                    </span>
+                                    
                                     <span class="text-secondary">
                                         (任意)
                                     </span>
@@ -123,6 +133,21 @@
                                     th:value="${task.time}"
                                     onclick="this.showPicker()">
 
+                                <div id="endTimeArea" class="mt-3">
+                                    <label class="form-label">
+                                        終了時間
+                                        <span class="text-secondary">
+                                            (任意)
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        name="endTime"
+                                        class="form-control"
+                                        th:value="${task.endTime}"
+                                        onclick="this.showPicker()">                                    
+                                </div>
                             </div>
 
                             <!--詳細・備考-->
@@ -167,6 +192,56 @@
         </div>
 
     </div>
+
+    <script>
+
+        const dateType =
+            document.getElementById("dateType");
+
+        const timeLabel =
+            document.getElementById("timeLabel");
+
+        const endTimeArea =
+            document.getElementById("endTimeArea");
+
+        const endTime =
+            document.getElementById("endTime");
+
+        //時間表示切り替え
+        function toggleEndTime() {
+
+            if (dateType.value === "SCHEDULE") {
+
+                timeLabel.textContent =
+                    "開始時間";
+
+                endTimeArea.style.display =
+                    "block";
+
+            } else {
+
+                timeLabel.textContent =
+                    "締切時間";
+
+                endTimeArea.style.display =
+                    "none";
+
+                endTime.value =
+                    "";
+
+            }
+        }
+
+        //予定・締切区分変更時
+        dateType.addEventListener(
+            "change",
+            toggleEndTime
+        );
+
+        //初期表示
+        toggleEndTime();
+
+    </script>
 
 </body>
 

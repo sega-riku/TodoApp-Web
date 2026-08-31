@@ -45,6 +45,12 @@
                             th:action="@{/edit/group/{id}(id=${task.id})}"
                             method="post">
 
+                        <div
+                            th:if="${timeError}"
+                            class="alert alert-danger"
+                            th:text="${timeError}">
+                        </div>
+
                             <!--タスク名-->
                             <div class="mb-3">
 
@@ -72,6 +78,7 @@
                                     </label>
 
                                     <select
+                                        id="dateType"
                                         name="dateType"
                                         class="form-select"
                                         required>
@@ -113,6 +120,48 @@
 
                             </div>
 
+                            <!--タスク全体の時間-->
+                            <div class="row g-3 mb-4">
+
+                                <!--開始時間・締切時間-->
+                                <div class="col-6">
+                                    <label
+                                        id="groupStartTimeLabel"
+                                        class="form-label">
+                                       開始時間
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        name="groupStartTime"
+                                        class="form-control"
+                                        th:value="${task.groupStartTime != null
+                                            ? #temporals.format(task.groupStartTime, 'HH:mm')
+                                            : ''}"
+                                        onclick="this.showPicker()">
+                                </div>
+
+                                <!--予定の終了時間-->
+                                <div
+                                    id="groupEndTimeArea"
+                                    class="col-6">
+
+                                    <label class="form-label">
+                                        終了時間
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        id="groupEndTime"
+                                        name="groupEndTime"
+                                        class="form-control"
+                                        th:value="${task.groupEndTime}"
+                                        onclick="this.showPicker()">
+
+                                </div>
+
+                            </div>
+
                             <!--変更対象の説明-->
                             <div class="alert alert-info">
 
@@ -121,7 +170,7 @@
                                 </p>
 
                                 <p class="mb-0">
-                                    タスク名・予定/締切区分・日付が、
+                                    タスク名・予定/締切区分・日付・予定全体の時間が、
                                     同じグループ内のすべての予定・締切に反映されます。
                                 </p>
 
@@ -146,6 +195,8 @@
 
                         </form>
 
+
+
                     </div>
 
                 </div>
@@ -155,6 +206,50 @@
         </div>
 
     </div>
+
+    <script>
+    const dateType =
+        document.getElementById("dateType");
+
+    const groupStartTimeLabel =
+        document.getElementById("groupStartTimeLabel");
+
+    const groupEndTimeArea =
+        document.getElementById("groupEndTimeArea");
+
+    const groupEndTime =
+        document.getElementById("groupEndTime");
+
+    function updateTimeFields(){
+
+        if(dateType.value === "SCHEDULE"){
+
+            groupStartTimeLabel.textContent =
+                "開始時間";
+
+            groupEndTimeArea.style.display =
+                "";
+
+        }else{
+
+            groupStartTimeLabel.textContent =
+                "締切時間";
+
+            groupEndTimeArea.style.display =
+                "none";
+
+            groupEndTime.value =
+                "";
+        }
+    }
+
+    dateType.addEventListener(
+        "change",
+        updateTimeFields
+    );
+
+    updateTimeFields();
+    </script>
 
 </body>
 

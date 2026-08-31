@@ -377,7 +377,7 @@
                 <div class="mb-5">
 
                     <h4 class="mb-3">
-                        📅 予定
+                        📝 予定
                     </h4>
 
                     <!--予定がない場合-->
@@ -405,7 +405,7 @@
 
                             <a
                                 class="btn btn-outline-primary btn-sm"
-                                th:href="@{/add(deadline=${dateGroup.deadline})}">
+                                th:href="@{/add(deadline=${dateGroup.deadline},dateType='SCHEDULE')}">
                                 ＋ この日のタスク追加
                             </a>
 
@@ -425,10 +425,6 @@
 
                                     <div class="fw-semibold task-title-line">
 
-                                        <span class="task-title-icon">
-                                            📅
-                                        </span>
-
                                         <span
                                             class="task-title-text"
                                             th:text="${group.title}">
@@ -436,6 +432,29 @@
                                         </span>
 
                                     </div>
+
+                                    <!--予定全体の時間-->
+                                    <span
+                                        th:if="${group.tasks.get(0).groupStartTime != null}"
+                                        class="fw-semibold task-detail-time">
+
+                                        <span
+                                            th:text="${group.tasks.get(0).groupStartTime}">
+                                            14:00
+                                        </span>
+
+                                        <span
+                                            th:if="${group.tasks.get(0).groupEndTime != null}">
+                                            ～
+                                        </span>
+
+                                        <span
+                                            th:if="${group.tasks.get(0).groupEndTime != null}"
+                                            th:text="${group.tasks.get(0).groupEndTime}">
+                                            18:00
+                                        </span>
+
+                                    </span>
 
                                     <!--ステータス-->
                                     <span
@@ -567,8 +586,17 @@
                                                 ? ' text-secondary text-decoration-line-through'
                                                 : ''}">
 
+                                            <!--開始時間・終了時間あり-->
                                             <span
-                                                th:if="${task.time != null}"
+                                                th:if="${task.time != null && task.endTime != null}"
+                                                class="fw-semibold task-detail-time">
+
+                                                <span th:text="${task.time}"></span>～<span th:text="${task.endTime}"></span>
+                                            </span>
+
+                                            <!--開始時間のみ-->
+                                            <span
+                                                th:if="${task.time != null && task.endTime == null}"
                                                 class="fw-semibold task-detail-time"
                                                 th:text="${task.time}">
                                                 10:00
@@ -672,11 +700,20 @@
 
                                                 <p class="mb-1">
 
-                                                    <span
-                                                        th:if="${task.time != null}"
-                                                        th:text="${task.time}">
-                                                        10:00
-                                                    </span>
+                                                <!--開始時間・終了時間あり-->
+                                                <span
+                                                    th:if="${task.time != null && task.endTime != null}">
+
+                                                    <span th:text="${task.time}"></span>～<span th:text="${task.endTime}"></span>
+
+                                                </span>
+
+                                                <!--開始時間のみ-->
+                                                <span
+                                                    th:if="${task.time != null && task.endTime == null}"
+                                                    th:text="${task.time}">
+                                                    10:00
+                                                </span>
 
                                                     <span
                                                         th:classappend="${task.time != null ? 'ms-2' : ''}"
@@ -792,7 +829,7 @@
 
                             <a
                                 class="btn btn-outline-primary btn-sm"
-                                th:href="@{/add(deadline=${dateGroup.deadline})}">
+                                th:href="@{/add(deadline=${dateGroup.deadline},dateType='DEADLINE')}">
                                 ＋ この日のタスク追加
                             </a>
 
@@ -812,10 +849,7 @@
 
                                     <div class="fw-semibold task-title-line">
 
-                                        <span class="task-title-icon">
-                                            ⏰
-                                        </span>
-
+                                       
                                         <span
                                             class="task-title-text"
                                             th:text="${group.title}">
@@ -823,6 +857,14 @@
                                         </span>
 
                                     </div>
+
+                                    <!--締切時間-->
+                                    <span
+                                        th:if="${group.tasks.get(0).groupStartTime != null}"
+                                        class="fw-semibold task-detail-time"
+                                        th:text="${group.tasks.get(0).groupStartTime}">
+                                        18:00
+                                    </span>
 
                                     <!--ステータス-->
                                     <span
@@ -977,7 +1019,7 @@
                                                     ? '🚨'
                                                     : !task.deadline.isAfter(threeDaysLater)
                                                         ? '⚠️'
-                                                        : '⏰'}">
+                                                        : ''}">
                                             </span>
 
                                             <!--時間-->
@@ -1218,12 +1260,36 @@
                             <span
                                 th:text="${group.tasks.get(0).dateType
                                     == T(com.sega.todoappweb.task.DateType).SCHEDULE
-                                    ? '📅 予定：'
+                                    ? '📝 予定：'
                                     : '⏰ 締切：'}">
                             </span>
 
                             <span th:text="${group.deadline}">
                                 2026-08-31
+                            </span>
+
+                        </p>
+
+                        <!--タスク全体の時間-->
+                        <p
+                            th:if="${group.tasks.get(0).groupStartTime != null}"
+                            class="card-text fw-semibold mb-2">
+
+                            <span
+                                th:text="${group.tasks.get(0).groupStartTime}">
+                                14:00
+                            </span>
+
+                            <!--予定の未終了時間表示-->
+                            <span
+                                th:if="${group.tasks.get(0).groupEndTime != null}">
+                                ～
+                            </span>
+
+                            <span
+                                th:if="${group.tasks.get(0).groupEndTime != null}"
+                                th:text="${group.tasks.get(0).groupEndTime}">
+                                18:00
                             </span>
 
                         </p>
@@ -1238,11 +1304,21 @@
 
                             <div>
 
-                                <span
-                                    th:if="${task.time != null}"
-                                    th:text="${task.time}">
-                                    10:00
-                                </span>
+                            <!--開始時間・終了時間あり-->
+                            <span
+                                th:if="${task.time != null && task.endTime != null}"
+                                class="fw-semibold task-detail-time">
+
+                                <span th:text="${task.time}"></span>～<span th:text="${task.endTime}"></span>
+                            </span>
+
+                            <!--開始時間のみ-->
+                            <span
+                                th:if="${task.time != null && task.endTime == null}"
+                                class="fw-semibold task-detail-time"
+                                th:text="${task.time}">
+                                10:00
+                            </span>
 
                                 <span
                                     th:classappend="${task.time != null ? 'ms-2' : ''}"
