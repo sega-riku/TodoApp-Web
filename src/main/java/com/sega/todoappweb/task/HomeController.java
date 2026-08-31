@@ -1,6 +1,5 @@
 package com.sega.todoappweb.task;
 
-import com.sega.todoappweb.admin.AdminController;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -27,7 +26,6 @@ import com.sega.todoappweb.contact.ContactRepository;
 @Controller
 public class HomeController {
 
-    private final AdminController adminController;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ContactRepository contactRepository;
@@ -35,12 +33,11 @@ public class HomeController {
     public HomeController(
         TaskRepository taskRepository,
         UserRepository userRepository,
-        ContactRepository contactRepository, AdminController adminController
+        ContactRepository contactRepository
     ) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.contactRepository = contactRepository;
-        this.adminController = adminController;
     }
 
     // メイン画面処理
