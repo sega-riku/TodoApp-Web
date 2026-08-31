@@ -45,7 +45,8 @@
 
                         <form
                             th:action="@{/add}"
-                            method="post">
+                            method="post"
+                            onsubmit="disableTaskSubmit(this)">
 
                             <!--タスク名-->
                             <div class="mb-3">
@@ -240,6 +241,20 @@
     </div>
 
     <script>
+
+        //タスク登録連打防止
+        function disableTaskSubmit(form) {
+
+            const submitButton =
+                form.querySelector(
+                    'button[type="submit"]'
+                );
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "登録中...";
+            }
+        }
 
         const dateType =
             document.getElementById("dateType");

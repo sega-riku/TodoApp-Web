@@ -96,6 +96,12 @@
 
         </div>
 
+        <!--お問い合わせ一括削除フォーム-->
+        <form
+            id="contactHistoryDeleteForm"
+            th:action="@{/admin/contact/history/delete-selected}"
+            method="post">
+        </form>
 
         <!--対応済みお問い合わせ一覧-->
         <div class="card">
@@ -120,6 +126,7 @@
                         <thead>
 
                             <tr>
+                                <th>選択</th>
                                 <th>お問い合わせ者</th>
                                 <th>区分</th>
                                 <th>お問い合わせ日</th>
@@ -132,6 +139,15 @@
                         <tbody>
 
                             <tr th:each="contact : ${completedContacts}">
+
+                                <!--削除対象選択-->
+                                <td>
+                                    <input 
+                                        type="checkbox"
+                                        name="contactIds"
+                                        th:value="${contact.id}"
+                                        form="contactHistoryDeleteForm">
+                                </td>
 
                                 <!--お問い合わせ者-->
                                 <td th:text="${contact.username}">
@@ -186,6 +202,14 @@
                     </table>
 
                 </div>
+
+                <!--選択したお問い合わせを削除-->
+                <button
+                    type="submit"
+                    class="btn btn-danger mt-3"
+                    form="contactHistoryDeleteForm">
+                    選択したお問い合わせを削除
+                </button>
 
             </div>
 

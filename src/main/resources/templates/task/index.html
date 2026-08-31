@@ -1692,7 +1692,8 @@
 
                 <form
                     th:action="@{/contact}"
-                    method="post">
+                    method="post"
+                    onsubmit="disableContactSubmit(this)">
 
                     <div class="modal-body">
 
@@ -2117,6 +2118,22 @@
             }
         );
 
+    </script>
+
+    <!--お問い合わせ送信連打防止-->
+    <script>
+        function disableContactSubmit(form) {
+
+            const submitButton =
+                form.querySelector(
+                    'button[type="submit"]'
+                );
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "送信中...";
+            }
+        }
     </script>
 
     <!--Service Worker登録-->

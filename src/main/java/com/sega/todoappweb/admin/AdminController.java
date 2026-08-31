@@ -1,5 +1,6 @@
 package com.sega.todoappweb.admin;
 
+import com.sega.todoappweb.contact.ContactController;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,7 +40,7 @@ public class AdminController {
         PasswordEncoder passwordEncoder,
         TaskRepository taskRepository,
         ContactRepository contactRepository,
-        MailService mailService
+        MailService mailService, ContactController contactController
     ) {
         this.userRepository = userRepository;
         this.adminNotificationRepository = adminNotificationRepository;
@@ -378,6 +379,38 @@ public class AdminController {
         );
 
         return "redirect:/admin";
+    }
+
+    //お問い合わせ一括削除処理
+    @Transactional
+    @PostMapping("/admin/contact/delete-selected")
+    public String deleteSelectedContacts(
+        @RequestParam(
+            name = "contactIds",
+            required = false
+        )List<Long> contactIds
+    ){
+        if(contactIds != null && !contactIds.isEmpty()){
+            contactRepository.deleteAllById(contactIds);
+        }
+        return "redirect:/admin";
+    }
+
+    //対応済みお問い合わせ一括削除処理
+    @Transactional
+    @PostMapping("/admin/contact/history/delete-selected")
+    public String deleteSelectedContactHistory(
+        @RequestParam(
+            name = "contactIds",
+            required = false
+        )List<Long> contactIds
+    ){
+        //削除対象が選択されている場合
+        if(contactIds != null && !contactIds.isEmpty()){
+            contactRepository.deleteAllById(contactIds);
+        }
+
+        return "redirect:/admin/contact/history";
     }
 
     //ユーザー詳細画面処理

@@ -155,6 +155,12 @@
 
                 </div>
 
+                <!--お問い合わせ一括削除フォーム-->
+                <form 
+                    id="contactDeleteForm"
+                    th:action="@{/admin/contact/delete-selected}"
+                    method="post">
+                </form>
 
                 <!--お問い合わせ一覧-->
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -194,6 +200,7 @@
                                 <thead>
 
                                     <tr>
+                                        <th>選択</th>
                                         <th>お問い合わせ者</th>
                                         <th>お問い合わせ日</th>
                                         <th>対応ステータス</th>
@@ -205,6 +212,13 @@
                                 <tbody>
 
                                     <tr th:each="contact : ${contacts}">
+                                        <!--削除対象選択-->
+                                        <td>
+                                            <input type="checkbox" 
+                                                   name="contactIds"
+                                                   th:value="${contact.id}"
+                                                   form="contactDeleteForm">
+                                        </td>
 
                                         <!--お問い合わせ者-->
                                         <td th:text="${contact.username}">
@@ -260,6 +274,13 @@
                             </table>
 
                         </div>
+                        <!--選択したお問い合わせを削除-->
+                        <button
+                            type="submit"
+                            class="btn btn-danger mt-3"
+                            form="contactDeleteForm">
+                            選択したお問い合わせを削除
+                        </button>
 
                     </div>
 
