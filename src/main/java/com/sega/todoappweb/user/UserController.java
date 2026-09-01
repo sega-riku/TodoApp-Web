@@ -379,6 +379,38 @@ public class UserController {
         return "redirect:/";
     }
 
+    //ホーム画面レイアウト変更処理
+    @PostMapping("/user/home-layout")
+    public String updateHomeLayout(
+        @RequestParam String homeLayout,
+        Principal principal,
+        RedirectAttributes redirectAttributes
+    ) {
+        //ログインユーザー取得
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        
+        //レイアウト設定値チェック
+        if(
+            !homeLayout.equals("SCHEDULE_LEFT")
+            && !homeLayout.equals("TASK_LEFT")
+        ){
+            redirectAttributes.addFlashAttribute("layoutError","レイアウトの変更に失敗しました。");
+
+            return "redirect:/";
+        }
+        
+        //レイアウト変更
+        user.setHomeLayout(homeLayout);
+
+        //ユーザー情報保存
+        userRepository.save(user);
+
+        redirectAttributes.addFlashAttribute("layoutSuccess","レイアウトを変更しました。");
+
+        return "redirect:/";
+    }
+    
+
     //アカウント削除処理
     @Transactional
     @PostMapping("/user/delete")

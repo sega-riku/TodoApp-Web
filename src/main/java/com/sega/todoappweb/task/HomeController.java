@@ -112,6 +112,8 @@ public class HomeController {
 
         LocalDate today =
             LocalDate.now();
+        
+        LocalDate sevenDaysLater = today.plusDays(6);
 
         // 通常一覧に表示してよいタスク
         for (Task task : tasks) {
@@ -374,8 +376,8 @@ public class HomeController {
 
                 // 今日より前の日付の予定は対象外
                 if (
-                    !task.getDeadline()
-                        .isBefore(today)
+                    !task.getDeadline().isBefore(today)
+                    && !task.getDeadline().isAfter(sevenDaysLater)
                 ) {
 
                     upcomingSchedules.add(
@@ -388,10 +390,14 @@ public class HomeController {
                 task.getDateType()
                 == DateType.DEADLINE
             ) {
-
-                upcomingDeadlines.add(
+                if (
+                    !task.getDeadline().isBefore(today)
+                    && !task.getDeadline().isAfter(sevenDaysLater)
+                    ) {
+                    upcomingDeadlines.add(
                     task
                 );
+                }
             }
         }
 
@@ -578,22 +584,6 @@ public class HomeController {
             }
         }
 
-        // 予定は直近5日分まで表示
-        if (
-            scheduleDateGroups.size()
-            > 5
-        ) {
-
-            scheduleDateGroups =
-                new ArrayList<>(
-                    scheduleDateGroups
-                        .subList(
-                            0,
-                            5
-                        )
-                );
-        }
-
         // 締切
         // 日付順、同じ日なら時間順
         // 時間未設定は同じ日付内の最後に表示
@@ -745,22 +735,6 @@ public class HomeController {
                     newDateGroup
                 );
             }
-        }
-
-        // 締切は直近5日分まで表示
-        if (
-            deadlineDateGroups.size()
-            > 5
-        ) {
-
-            deadlineDateGroups =
-                new ArrayList<>(
-                    deadlineDateGroups
-                        .subList(
-                            0,
-                            5
-                        )
-                );
         }
 
         // グループステータス判定

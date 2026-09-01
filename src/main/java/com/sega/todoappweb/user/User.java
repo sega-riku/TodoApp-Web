@@ -21,6 +21,7 @@ public class User {
     private String role;
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
+    private String homeLayout;
 
     // JPA用
     public User() {
@@ -33,6 +34,7 @@ public class User {
         this.role = role;
         this.createdAt = LocalDateTime.now();
         this.lastLoginAt = null;
+        this.homeLayout = "SCHEDULE_LEFT";
     }
 
     //getter
@@ -64,6 +66,10 @@ public class User {
         return lastLoginAt;
     }
 
+    public String getHomeLayout(){
+        return homeLayout;
+    }
+
     //setter
     public void setUsername(String username) {
         this.username = username;
@@ -83,5 +89,9 @@ public class User {
 
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public void setHomeLayout(String homeLayout){
+        this.homeLayout = homeLayout;
     }
 }
